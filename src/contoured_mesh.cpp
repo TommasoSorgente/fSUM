@@ -116,18 +116,21 @@ void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
     for (auto &l : labels_polys_map) {
         label_vec.push_back(l.first);
     }
-    // print_regions_csv(m, labels_polys_map, label_vec, prof);
+    print_regions_csv(m, labels_polys_map, label_vec, output_path, prof);
     print_regions_shp(m, labels_polys_map, label_vec, output_path, prof);
 
     restore_original_labels(m);
-
-    std::string out_format = Par.get_OUT_FORMAT();
-    if (out_format != "0") {
-        if (out_format == "-") {
-            out_format = Par.get_DIM() == 2 ? "obj" : "vtk";
-        }
-        save_mesh(m, Par.get_MESH_PATH(), out_format);
+    update_labels_polys_map(m, labels_polys_map);
+    std::vector<int> label_vec2;
+    for (auto &l : labels_polys_map) {
+        label_vec2.push_back(l.first);
     }
+    print_regions_off(m, labels_polys_map, label_vec2, output_path, prof);
+    print_regions_bnd(m, labels_polys_map, label_vec2, output_path, prof);
+
+    print_labels(m, output_path);
+    // save_mesh(m, output_path, Par.get_OUT_FORMAT());
+
     prof.pop();
 }
 
@@ -143,13 +146,9 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 
     restore_original_labels(m);
 
-    std::string out_format = Par.get_OUT_FORMAT();
-    if (out_format != "0") {
-        if (out_format == "-") {
-            out_format = Par.get_DIM() == 2 ? "obj" : "vtk";
-        }
-        save_mesh(m, Par.get_MESH_PATH(), out_format);
-    }
+    print_labels(m, output_path);
+    // save_mesh(m, output_path, Par.get_OUT_FORMAT());
+
     prof.pop();
 }
 

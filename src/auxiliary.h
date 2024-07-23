@@ -5,6 +5,8 @@
 #include <shapefil.h>
 
 #include <cinolib/meshes/meshes.h>
+#include <cinolib/export_cluster.h>
+#include <cinolib/profiler.h>
 
 using namespace cinolib;
 namespace fs = std::filesystem;
@@ -96,7 +98,8 @@ void mark_faces(Tetmesh<> &m)
 
 /**********************************************************************/
 
-void open_directory(const std::string &path) {
+/* create the directory if it does not exist, otherwise delete its content */
+void open_directory(const std::string &path, bool erase = true) {
     if (!fs::exists(path)) {
         // if the folder does not exist, create it
         try {
@@ -105,7 +108,7 @@ void open_directory(const std::string &path) {
             std::cerr << "Error creating folder: " << e.what() << std::endl;
             assert(false);
         }
-    } else {
+    } else if (erase) {
         // if the folder already exists, delete its content
         for (const auto &entry : fs::directory_iterator(path)) {
             if (entry.is_regular_file()) {
@@ -119,10 +122,13 @@ void open_directory(const std::string &path) {
 
 /**********************************************************************/
 
+/* extract the ordered sequence of vertices along the boundary of the region with label *label* */
 void extract_region(Polygonmesh<> &m, const uint label,
-                    std::vector<std::vector<vec3d>> &verts) {
+                    std::vector<std::vector<uint>> &verts) {
     Polygonmesh<> sub_m;
-    export_cluster(m, label, sub_m);
+    std::unordered_map<uint,uint> m2subm_vmap;
+    std::unordered_map<uint,uint> subm2m_vmap;
+    export_cluster(m, label, sub_m, m2subm_vmap, subm2m_vmap);
     assert(connected_components(sub_m) == 1);
 
     // count how many times each boundary vertex should be visited
@@ -144,10 +150,12 @@ void extract_region(Polygonmesh<> &m, const uint label,
     uint visits_count = 0;
     while (visits_count < total_visits) {
         // vertices in a connected component of the region boundary
-        std::vector<vec3d> verts_cc;
+        std::vector<uint> verts_cc;
         while (n_visits.at(v_curr) > 0) {
             // add v_curr to verts_cc
-            verts_cc.push_back(sub_m.vert(v_curr));
+            uint vid = subm2m_vmap[v_curr];
+            verts_cc.push_back(vid);
+            // verts_cc.push_back(sub_m.vert(v_curr));
             --n_visits.at(v_curr);
 
             // find v_next
@@ -211,18 +219,20 @@ void extract_region(Polygonmesh<> &m, const uint label,
     }
 }
 
-void print_regions_csv(Polygonmesh<> &m, const std::unordered_map<int, std::vector<uint>> &labels_polys_map, const std::vector<int> &label_vec, Profiler Prof) {
-    Prof.push("Print Regions");
-    std::string base_path = std::string(HOME_PATH) + "out/contours_csv";
-    open_directory(base_path);
+/* print the vertices of the regions on separate csv files */
+void print_regions_csv(Polygonmesh<> &m, const std::unordered_map<int, std::vector<uint>> &labels_polys_map,
+                       const std::vector<int> &label_vec, const std::string base_path, Profiler Prof) {
+    Prof.push("Print Region Vertices");
+    std::string dir = base_path + "/regions_csv";
+    open_directory(dir);
     //
     for (uint i = 0; i < labels_polys_map.size(); ++i) {
         uint pid0 = labels_polys_map.at(label_vec[i]).front();
         int label = m.poly_data(pid0).label;
-        std::vector<std::vector<vec3d>> verts;
+        std::vector<std::vector<uint>> verts;
         extract_region(m, label, verts);
 
-        std::string path = base_path + "/region_" + std::to_string(i) + ".csv";
+        std::string path = dir + "/region_" + std::to_string(i) + ".csv";
         std::ofstream fp;
         fp.open(path.c_str());
         assert(fp.is_open());
@@ -242,8 +252,9 @@ void print_regions_csv(Polygonmesh<> &m, const std::unordered_map<int, std::vect
         }
 
         // list of vertices in each connected component
-        for (std::vector<vec3d> &verts_cc : verts) {
-            for (vec3d &v : verts_cc) {
+        for (std::vector<uint> &verts_cc : verts) {
+            for (uint vid : verts_cc) {
+                vec3d v = m.vert(vid);
                 fp << v.x() << " " << v.y() << " " << v.z() << std::endl;
             }
         }
@@ -254,15 +265,20 @@ void print_regions_csv(Polygonmesh<> &m, const std::unordered_map<int, std::vect
 
 /**********************************************************************/
 
-void print_regions_shp(Polygonmesh<> &m, const std::unordered_map<int, std::vector<uint>> &labels_polys_map, const std::vector<int> &label_vec, const std::string base_path, Profiler Prof) {
-    Prof.push("Print Regions Shapefile");
-    std::string filename = base_path + "/contours.shp";
+/* print the vertices of the regions on separate shapefiles */
+void print_regions_shp(Polygonmesh<> &m, const std::unordered_map<int, std::vector<uint>> &labels_polys_map,
+                       const std::vector<int> &label_vec, const std::string base_path, Profiler Prof) {
+    Prof.push("Print Region Shapefiles");
+    std::string dir = base_path + "/regions_shp";
+    open_directory(dir);
+
+    std::string filename = dir + "/regions.shp";
     SHPHandle hSHP = SHPCreate(filename.c_str(), SHPT_POLYGON);
 
     for (uint i = 0; i < labels_polys_map.size(); ++i) {
         uint pid0 = labels_polys_map.at(label_vec[i]).front();
         int label = m.poly_data(pid0).label;
-        std::vector<std::vector<vec3d>> verts;
+        std::vector<std::vector<uint>> verts;
         extract_region(m, label, verts);
 
         for (uint j = 0; j < verts.size(); ++j) {
@@ -271,7 +287,8 @@ void print_regions_shp(Polygonmesh<> &m, const std::unordered_map<int, std::vect
             uint count = 0;
 
             // polygon vertices coordinates
-            for (vec3d &v : verts.at(j)) {
+            for (uint vid : verts.at(j)) {
+                vec3d v = m.vert(vid);
                 x[count] = v.x();
                 y[count] = v.y();
                 ++count;
@@ -291,26 +308,76 @@ void print_regions_shp(Polygonmesh<> &m, const std::unordered_map<int, std::vect
 
 /**********************************************************************/
 
-/* save the final mesh and export the cell labels in a csv file */
-template<class M, class V, class E, class P> inline
-void save_mesh(AbstractMesh<M,E,V,P> &m,
-               const std::string output_path, const std::string MESH_FORMAT)
-{
-    // save the mesh
-    size_t lastindex = std::string(output_path).find_last_of(".");
-    std::string mesh_path = std::string(output_path).substr(0, lastindex) + "_out." + MESH_FORMAT;
-    // m.save(mesh_path.c_str());
+/* print the regions as separate meshes, grouped for label */
+void print_regions_off(Polygonmesh<> &m, const std::unordered_map<int, std::vector<uint>> &labels_polys_map,
+                       const std::vector<int> &label_vec, const std::string base_path, Profiler Prof) {
+    Prof.push("Print Region Meshes");
+    std::string dir = base_path + "/regions_off";
+    open_directory(dir);
+    //
+    for (uint label : label_vec) {
+        Polygonmesh<> sub_m;
+        export_cluster(m, label, sub_m);
+        std::string path = dir + "/region_" + std::to_string(label) + ".off";
+        sub_m.save(path.c_str());
+    }
+    Prof.pop();
+}
 
-    // save the cells labels
-    std::string labels_path = std::string(output_path).substr(0, lastindex) + "_labels.csv";
+
+/**********************************************************************/
+
+/* print the regions boundaries as separate meshes, grouped for label */
+void print_regions_bnd(Polygonmesh<> &m, const std::unordered_map<int, std::vector<uint>> &labels_polys_map,
+                       const std::vector<int> &label_vec, const std::string base_path, Profiler Prof) {
+    Prof.push("Print Region Meshes");
+    std::string dir = base_path + "/regions_bnd";
+    open_directory(dir);
+    //
+    for (uint label : label_vec) {
+        std::vector<std::vector<uint>> verts;
+        extract_region(m, label, verts);
+
+        Polygonmesh<> sub_m(m.vector_verts());
+        for (std::vector<uint> poly : verts) {
+            sub_m.poly_add(poly);
+        }
+
+        std::string path = dir + "/region_" + std::to_string(label) + ".off";
+        sub_m.save(path.c_str());
+    }
+    Prof.pop();
+}
+
+/**********************************************************************/
+
+/* print the cell labels in a csv file */
+template<class M, class V, class E, class P> inline
+void print_labels(AbstractMesh<M,E,V,P> &m, const std::string output_path)
+{
+    std::string labels_path = output_path + "/labels.csv";
     std::ofstream fp;
     fp.open(labels_path.c_str());
     assert(fp.is_open());
-    fp << "SCALAR_FIELD " << m.num_polys() << "\n";
+    fp << "LABEL_FIELD " << m.num_polys() << "\n";
     for (uint pid = 0; pid < m.num_polys(); ++pid) {
         fp << m.poly_data(pid).label << std::endl;
     }
     fp.close();
+}
+
+/**********************************************************************/
+
+/* save the final mesh */
+template<class M, class V, class E, class P> inline
+void save_mesh(AbstractMesh<M,E,V,P> &m,
+               const std::string output_path, const std::string MESH_FORMAT)
+{
+    if (MESH_FORMAT == "-") {
+        MESH_FORMAT = m.mesh_is_surface() ? "obj" : "vtk";
+    }
+    std::string mesh_path = output_path + "/mesh_out." + MESH_FORMAT;
+    m.save(mesh_path.c_str());
 }
 
 #endif // AUXILIARY_H
