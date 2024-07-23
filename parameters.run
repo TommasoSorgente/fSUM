@@ -1,8 +1,8 @@
 ## PARAMETERS FILE
-mesh_path     data/cube_tet/mesh.vtk
-field1_path   data/cube_tet/phi_mean.csv
-field2_path   data/cube_tet/phi_mean.csv
-dim           3
+mesh_path     data/Liguria_tri/cr_FARENZANO/mesh_tri.obj
+field1_path   data/Liguria_tri/cr_FARENZANO/cr_mean.csv
+field2_path   data/Liguria_tri/cr_FARENZANO/cr_mean.csv
+dim           2
 ##
 n_regions     4
 isovals       0 15 45 90 100
@@ -13,6 +13,7 @@ filter_thresh 0.1
 ##
 gui           1
 show_iso      0
+out_path      out/
 out_format    -
 verbose       1
 
@@ -36,6 +37,7 @@ verbose       1
 ## OUTPUT
 ## gui:        launch graphical interface
 ## show_iso:   show isovalues/isosurfaces on the mesh (the gui becomes very slow)
+## out_path:   path do a directory where to save all outputs
 ## out_format: file format for saving the output mesh (0: do not save, -: obj/vtk)
 ## verbose:    print debug information
 */

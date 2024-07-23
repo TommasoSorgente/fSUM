@@ -1,7 +1,5 @@
 #ifndef CONTOURED_MESH_H
 #define CONTOURED_MESH_H
-
-/* class for segmenting a 2D/3D domain. All routines are executed by calling 'run' */
  
 #include <cinolib/meshes/meshes.h>
 #include <cinolib/color.h>
@@ -13,6 +11,7 @@
 
 #include "criteria.h"
 #include "statistics.h"
+#include "auxiliary.h"
 #include "read_parameters.h"
 
 #include <iostream>
@@ -20,22 +19,32 @@
 
 using namespace cinolib;
 
+/* class for segmenting a 2D/3D domain */
 class ContouredMesh {
 
 public:
     ContouredMesh(){}
     ~ContouredMesh(){}
 
-    /* complete routine */
-    void run(Polygonmesh<> &m, Parameters &Par);
-    void run(Polyhedralmesh<> &m, Parameters &Par);
-
-    /* mark edges or faces among cells with different labels */
-    template<class M, class V, class E, class P>
-    void mark_edges(AbstractMesh<M,E,V,P> &m);
-    void mark_faces(Tetmesh<> &m);
-
     std::vector<double> isovals;
+
+    template<class M, class V, class E, class P> inline
+    void init(AbstractMesh<M,E,V,P> &m, Parameters &Par);
+
+    template<class M, class V, class E, class P> inline
+    void segment(AbstractMesh<M,E,V,P> &m, Parameters &Par);
+
+    template<class M, class V, class E, class P> inline
+    void filter(AbstractMesh<M,E,V,P> &m, Parameters &Par);
+
+    template<class M, class V, class E, class P> inline
+    void smooth(AbstractMesh<M,E,V,P> &m, Parameters &Par);
+
+    template<class M, class V, class E, class P> inline
+    void analyze(AbstractMesh<M,E,V,P> &m, Parameters &Par);
+
+    void output(Polygonmesh<> &m,    Parameters &Par);
+    void output(Polyhedralmesh<> &m, Parameters &Par);
 
 private:
     double field_correction = 0.;
@@ -44,9 +53,9 @@ private:
     std::vector<double> field_global;
     std::unordered_map<int, std::vector<uint>> labels_polys_map;
     std::unordered_map<int, int> tmp_labels_map;
-    std::unordered_map<int, int> father_son_map;
     Profiler prof;
     bool verbose;
+    std::string output_path;
 
     /* load the scalar field and assign a field value to cells and vertices */
     template<class M, class V, class E, class P> inline
@@ -92,12 +101,7 @@ private:
 
     /* create a map <label, all polys with that label> */
     template<class M, class V, class E, class P>
-    void update_labels_polys_map(AbstractMesh<M,E,V,P> &m);
-
-    /* save the final mesh and export the cell labels in a csv file */
-    template<class M, class V, class E, class P>
-    void save_mesh(AbstractMesh<M,E,V,P> &m,
-                   const std::string mesh_path, const std::string MESH_FORMAT);
+    void update_labels_polys_map(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> &labels_polys_map);
 };
 
 #ifndef CINO_STATIC_LIB

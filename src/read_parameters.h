@@ -34,6 +34,7 @@ protected:
     double shp_thresh;      // refine regions with sqrt(area)/perimeter smaller than this
     double dim_thresh;      // refine regions with area smaller than this (percentual)
     double var_thresh;      // refine regions with quality variance smaller than this
+    string out_path;        // path do a directory where to save all outputs
     string out_format;      // file format for saving the output mesh
     bool   gui;             // launch graphical interface
     bool   show_iso;        // show isocontours/isosurfaces on the final plot
@@ -55,6 +56,7 @@ protected:
         shp_thresh    = 1.;
         dim_thresh    = 1.;
         var_thresh    = 1.;
+        out_path      = ".";
         out_format    = "";
         gui           = true;
         show_iso      = false;
@@ -88,6 +90,7 @@ protected:
     void read_shp_thresh(ifstream & inpf)   { inpf >> shp_thresh; }
     void read_dim_thresh(ifstream & inpf)   { inpf >> dim_thresh; }
     void read_var_thresh(ifstream & inpf)   { inpf >> var_thresh; }
+    void read_out_path(ifstream & inpf)     { inpf >> out_path; }
     void read_out_format(ifstream & inpf)   { inpf >> out_format; }
     void read_gui(ifstream & inpf)          { inpf >> gui; }
     void read_show_iso(ifstream & inpf)     { inpf >> show_iso; }
@@ -110,6 +113,7 @@ protected:
       else if ( keywd == "shp_thresh" )     { read_shp_thresh(inpf); }
       else if ( keywd == "dim_thresh" )     { read_dim_thresh(inpf); }
       else if ( keywd == "var_thresh" )     { read_var_thresh(inpf); }
+      else if ( keywd == "out_path" )       { read_out_path(inpf); }
       else if ( keywd == "out_format" )     { read_out_format(inpf); }
       else if ( keywd == "gui" )            { read_gui(inpf); }
       else if ( keywd == "show_iso" )       { read_show_iso(inpf); }
@@ -138,6 +142,7 @@ public:
     void set_SHP_THRESH     (const double value)  { shp_thresh = value; }
     void set_DIM_THRESH     (const double value)  { dim_thresh = value; }
     void set_VAR_THRESH     (const double value)  { var_thresh = value; }
+    void set_OUT_PATH       (const string value)  { out_path = value; }
     void set_OUT_FORMAT     (const string value)  { out_format = value; }
     void set_GUI            (const bool value)    { gui = value; }
     void set_SHOW_ISO       (const bool value)    { show_iso = value; }
@@ -158,6 +163,7 @@ public:
     double get_SHP_THRESH ()      { return shp_thresh; }
     double get_DIM_THRESH ()      { return dim_thresh; }
     double get_VAR_THRESH ()      { return var_thresh; }
+    string get_OUT_PATH ()        { return out_path; }
     string get_OUT_FORMAT ()      { return out_format; }
     bool   get_GUI ()             { return gui; }
     bool   get_SHOW_ISO ()        { return show_iso; }
@@ -181,11 +187,12 @@ public:
       cout << "shp_thresh: "        << shp_thresh << endl;
       cout << "dim_thresh: "        << dim_thresh << endl;
       cout << "var_thresh: "        << var_thresh << endl;
+      cout << "out_path: "          << out_path << endl;
       cout << "out_format: "        << out_format << endl;
       cout << "gui: "               << gui << endl;
       cout << "show_iso: "          << show_iso << endl;
       cout << "verbose: "           << verbose << endl;
-      cout << "end of print_pars"   << endl;
+      cout << "end of print_pars\n"   << endl;
     }
 };
 

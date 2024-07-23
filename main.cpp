@@ -22,13 +22,20 @@ int main(int argc, char *argv[]) {
     if (Par.get_VERBOSE())
         Par.print_pars();
 
-    ContouredMesh Cont_mesh;
+    ContouredMesh FESA;
 
     switch (Par.get_DIM()) {
     case 2: {
         DrawablePolygonmesh<> m;
-        Cont_mesh.run(m, Par);
+        FESA.init(m, Par);
+        FESA.segment(m, Par);
+        FESA.filter(m, Par);
+        FESA.smooth(m, Par);
+        FESA.analyze(m, Par);
+        FESA.output(m, Par);
         if (!Par.get_GUI()) break;
+
+        mark_edges(m);
 
         m.show_wireframe_transparency(0.2f);
         int n_labels = Par.get_N_REGIONS() - 1;
@@ -45,7 +52,7 @@ int main(int argc, char *argv[]) {
         gui.push(&m);
 
         if (Par.get_SHOW_ISO()) {
-            std::vector<double> isovalues = Cont_mesh.isovals;
+            std::vector<double> isovalues = FESA.isovals;
             for (uint i=0; i<isovalues.size(); ++i) {
                 DrawableIsocontour<> *contour = new DrawableIsocontour<>(m, isovalues.at(i));
                 contour->thickness = 700;
@@ -63,7 +70,12 @@ int main(int argc, char *argv[]) {
     }
     case 3: {
         DrawablePolyhedralmesh<> m;
-        Cont_mesh.run(m, Par);
+        FESA.init(m, Par);
+        FESA.segment(m, Par);
+        FESA.filter(m, Par);
+        FESA.smooth(m, Par);
+        FESA.analyze(m, Par);
+        FESA.output(m, Par);
         if (!Par.get_GUI()) break;
 
         m.show_out_wireframe_transparency(0.2f);
@@ -76,7 +88,7 @@ int main(int argc, char *argv[]) {
 
         if (Par.get_SHOW_ISO()) {
             assert(false && "show_iso not working for 3D meshes!");
-            std::vector<double> isovalues = Cont_mesh.isovals;
+            std::vector<double> isovalues = FESA.isovals;
             Tetmesh<> m_tet(m.vector_verts(), m.vector_polys());
             for (uint i=0; i<isovalues.size(); ++i) {
                 DrawableIsosurface<> *surface = new DrawableIsosurface<>(m_tet, isovalues.at(i));
