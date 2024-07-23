@@ -1,7 +1,7 @@
 ## PARAMETERS FILE
-mesh_path     ../data/cube_tet/mesh.vtk
-field1_path   ../data/cube_tet/phi_mean.csv
-field2_path   ../data/cube_tet/phi_mean.csv
+mesh_path     data/cube_tet/mesh.vtk
+field1_path   data/cube_tet/phi_mean.csv
+field2_path   data/cube_tet/phi_mean.csv
 dim           3
 ##
 n_regions     4

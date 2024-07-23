@@ -34,4 +34,7 @@
 # Directories
 build/
 out/
+
+# Files
 CMakeLists.txt.user
+data/cube_tet/mesh.vtk
