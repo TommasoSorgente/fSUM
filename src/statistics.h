@@ -321,7 +321,8 @@ void Statistics::print_regions_shp(Polygonmesh<> &m) {
 
         for (uint j = 0; j < verts.size(); ++j) {
             uint n = verts.at(j).size();
-            double x[n], y[n];
+            double *x = new double[n];
+            double *y = new double[n];
             uint count = 0;
 
             // polygon vertices coordinates
