@@ -4,14 +4,14 @@ FESA: _Field-Driven Enriched Segmentation Algorithm_ is an algorithm for partiti
 
 ## How to get it 
 
-Please, use --recursive when cloning this repository:
+Please use --recursive when cloning this repository:
 
 ```
 git clone --recursive https://github.com/TommasoSorgente/FESA
 ```
 
-In the following, please consider `${REPO_ROOT}` variable as the folder where this `README.md` lies. 
-FESA can be built by running CMake, and the executable will be available in the `${REPO_ROOT}/build` folder.
+FESA can be built by running CMake by running the following instructions.
+The executable will be available in `${REPO_ROOT}/build`, being `${REPO_ROOT}` the folder where this `README.md` lies. 
 
 ```
 cd ${REPO_ROOT}
