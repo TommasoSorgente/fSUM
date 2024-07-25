@@ -36,5 +36,6 @@ build/
 out/
 
 # Files
-CMakeLists.txt.user
+*.DS_Store
+*.user
 data/cube_tet/mesh.vtk

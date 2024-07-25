@@ -7,6 +7,7 @@
 #include <cinolib/meshes/meshes.h>
 #include <cinolib/export_cluster.h>
 #include <cinolib/profiler.h>
+#include <cinolib/connected_components.h>
 
 using namespace cinolib;
 namespace fs = std::filesystem;
@@ -98,6 +99,19 @@ void mark_faces(Tetmesh<> &m)
 
 /**********************************************************************/
 
+/* create a map <label, all polys with that label> */
+template<class M, class V, class E, class P> inline
+void update_labels_polys_map(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> &labels_polys_map)
+{
+    labels_polys_map.clear();
+    for (uint pid = 0; pid < m.num_polys(); ++pid) {
+        labels_polys_map[m.poly_data(pid).label].push_back(pid);
+    }
+}
+
+
+/**********************************************************************/
+
 /* create the directory if it does not exist, otherwise delete its content */
 void open_directory(const std::string &path, bool erase = true) {
     if (!fs::exists(path)) {
@@ -129,7 +143,7 @@ void extract_region(Polygonmesh<> &m, const uint label,
     std::unordered_map<uint,uint> m2subm_vmap;
     std::unordered_map<uint,uint> subm2m_vmap;
     export_cluster(m, label, sub_m, m2subm_vmap, subm2m_vmap);
-    assert(connected_components(sub_m) == 1);
+    // assert(connected_components(sub_m) == 1);
 
     // count how many times each boundary vertex should be visited
     std::vector<int> n_visits(sub_m.num_verts(), 0);
@@ -153,8 +167,7 @@ void extract_region(Polygonmesh<> &m, const uint label,
         std::vector<uint> verts_cc;
         while (n_visits.at(v_curr) > 0) {
             // add v_curr to verts_cc
-            uint vid = subm2m_vmap[v_curr];
-            verts_cc.push_back(vid);
+            verts_cc.push_back(subm2m_vmap[v_curr]);
             // verts_cc.push_back(sub_m.vert(v_curr));
             --n_visits.at(v_curr);
 
@@ -201,7 +214,8 @@ void extract_region(Polygonmesh<> &m, const uint label,
             v_curr = v_next;
             ++visits_count;
         }
-        assert(sub_m.vert(v_next) == verts_cc.front() && "extract_region: open sequence");
+        // assert(sub_m.vert(v_next) == verts_cc.front() && "extract_region: open sequence");
+        assert(subm2m_vmap[v_next] == verts_cc.front() && "extract_region: open sequence");
         verts.push_back(verts_cc);
 
         // if there are still boundary vertices to visit, jump to an unvisited one

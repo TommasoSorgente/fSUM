@@ -112,10 +112,13 @@ void ContouredMesh::analyze(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
 {
     prof.push("FESA::output");
+
+    update_labels_polys_map(m, labels_polys_map);
     std::vector<int> label_vec;
     for (auto &l : labels_polys_map) {
         label_vec.push_back(l.first);
     }
+
     print_regions_csv(m, labels_polys_map, label_vec, output_path, prof);
     print_regions_shp(m, labels_polys_map, label_vec, output_path, prof);
 
@@ -125,8 +128,9 @@ void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
     for (auto &l : labels_polys_map) {
         label_vec2.push_back(l.first);
     }
+
     print_regions_off(m, labels_polys_map, label_vec2, output_path, prof);
-    print_regions_bnd(m, labels_polys_map, label_vec2, output_path, prof);
+    // print_regions_bnd(m, labels_polys_map, label_vec2, output_path, prof);
 
     print_labels(m, output_path);
     // save_mesh(m, output_path, Par.get_OUT_FORMAT());
@@ -576,15 +580,4 @@ void ContouredMesh::restore_original_labels(AbstractMesh<M,E,V,P> &m)
         m.poly_data(pid).label = old_label;
     });
     prof.pop(true, "\tfound " + std::to_string(m.polys_n_unique_labels()) + " labels");
-}
-
-/**********************************************************************/
-
-template<class M, class V, class E, class P> inline
-void ContouredMesh::update_labels_polys_map(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> &labels_polys_map)
-{
-    labels_polys_map.clear();
-    for (uint pid = 0; pid < m.num_polys(); ++pid) {
-        labels_polys_map[m.poly_data(pid).label].push_back(pid);
-    }
 }

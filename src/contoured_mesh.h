@@ -98,10 +98,6 @@ private:
     /* reassign the original *n_regions* labels to the cells */
     template<class M, class V, class E, class P>
     void restore_original_labels(AbstractMesh<M,E,V,P> &m);
-
-    /* create a map <label, all polys with that label> */
-    template<class M, class V, class E, class P>
-    void update_labels_polys_map(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> &labels_polys_map);
 };
 
 #ifndef CINO_STATIC_LIB
