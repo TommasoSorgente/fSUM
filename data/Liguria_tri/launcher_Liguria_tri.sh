@@ -1,8 +1,12 @@
 #!/bin/bash
 
-data_folder="data/Liguria_tri/"
-#FESA="build/Qt_6_7_2_for_macOS-Release/FESA"
-FESA="build/Desktop_Qt_6_7_2-Release/FESA"
+# Automatic routine for launching FESA on all Ligurian regions.
+# Please specify the path to the regions folder and to the FESA executable. 
+
+data_folder="./"
+#FESA="../../build/FESA"
+#FESA="../../build/Qt_6_7_2_for_macOS-Release/FESA"
+FESA="../../build/Desktop_Qt_6_7_2-Release/FESA"
 
 regions=("cr_F5TERRE" 
 	 "cr_FARENZANO" 
