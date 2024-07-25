@@ -18,12 +18,6 @@ cmake ..
 make
 ```
 
-```
-git status
-git add
-git commit
-```
-
 **Content of the repository:**
  - _CMakeLists.txt_: CMake file to compile the code.
  - _parameters.run_: file containing all the parameters involved in the algorithm.
