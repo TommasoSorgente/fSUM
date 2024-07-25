@@ -25,10 +25,10 @@ make
 
 **Content of the repository:**
 
- - _CMakeLists.txt_: CMake file to compile the code.
- - _parameters.run_: file containing all the parameters involved in the algorithm.
- - _main.cpp_: sample program that reads input parameters, partitions the mesh and optionally displays it in a graphical interface.
- - _src_: folder containing the source code.
- - _data_: folder containing the data used in the paper.
- - _external_: folder containing links to external libraries.
+ - `CMakeLists.txt` CMake file to compile the code.
+ - `parameters.run` file containing all the parameters involved in the algorithm.
+ - `main.cpp` sample program that reads input parameters, partitions the mesh and optionally displays it in a graphical interface.
+ - `src` folder containing the source code.
+ - `data` folder containing the data used in the paper.
+ - `external` folder containing links to external libraries.
 
