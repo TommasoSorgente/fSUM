@@ -1,32 +1,49 @@
 cmake_minimum_required(VERSION 3.5)
-
 project(merge_regions LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(merge_regions main.cpp)
+set(CINOLIB_USES_OPENGL_GLFW_IMGUI    OFF )
+set(CINOLIB_USES_TETGEN               OFF )
+set(CINOLIB_USES_TRIANGLE             OFF )
+set(CINOLIB_USES_SHEWCHUK_PREDICATES  OFF )
+set(CINOLIB_USES_INDIRECT_PREDICATES  OFF )
+set(CINOLIB_USES_GRAPH_CUT            OFF)
+set(CINOLIB_USES_BOOST                OFF)
+set(CINOLIB_USES_VTK                  OFF) # optional, if added VTK formats will be supported everywhere
+set(CINOLIB_USES_SPECTRA              OFF )
+set(CINOLIB_USES_CGAL_GMP_MPFR        OFF )
 
-set(cinolib_DIR "${PROJECT_SOURCE_DIR}/../cinolib")
-
-set(CINOLIB_USES_OPENGL_GLFW_IMGUI ON)
-set(CINOLIB_USES_VTK ON)
-
+set(cinolib_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../external/cinolib)
 find_package(cinolib REQUIRED)
 
-find_package(Boost REQUIRED)
-add_definitions(-DCINOLIB_USES_BOOST)
+
+set (SHAPELIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../external/shapelib")
+set (SHAPELIB_BUILD "${SHAPELIB_DIR}/build-${CMAKE_SYSTEM_NAME}")
+
+file (MAKE_DIRECTORY ${SHAPELIB_BUILD})
 
 if (APPLE)
-    target_link_libraries(${PROJECT_NAME} PUBLIC cinolib /usr/local/lib/libshp.a)
+    set (SHAPELIB_LIB "${SHAPELIB_BUILD}/libshp.a")
 elseif (UNIX)
-    target_link_libraries(${PROJECT_NAME} PUBLIC cinolib /usr/local/lib/libshp.so)
+    set (SHAPELIB_LIB "${SHAPELIB_BUILD}/libshp.so")
+elseif (MSVC)
+    set (SHAPELIB_LIB "${SHAPELIB_BUILD}/dll/Debug/shp.lib")
 endif()
 
-add_compile_definitions(HOME_PATH="${PROJECT_SOURCE_DIR}/")
+if(NOT EXISTS "${SHAPELIB_LIB}")
+    message ("Building shapelib... ${SHAPELIB_LIB}")
+    add_custom_command(
+        OUTPUT "${SHAPELIB_LIB}"
+        COMMAND cmake .. && cmake --build .
+        WORKING_DIRECTORY "${SHAPELIB_BUILD}" )
+endif()
 
-include(GNUInstallDirs)
-install(TARGETS merge_regions
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+include_directories(${SHAPELIB_DIR})
+
+add_executable(${PROJECT_NAME} main.cpp ${SHAPELIB_LIB})
+
+target_link_libraries(${PROJECT_NAME} PUBLIC cinolib ${SHAPELIB_LIB})
+
+add_compile_definitions(HOME_PATH="${PROJECT_SOURCE_DIR}/")
