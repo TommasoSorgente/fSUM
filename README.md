@@ -10,7 +10,7 @@ Please use --recursive when cloning this repository:
 git clone --recursive https://github.com/TommasoSorgente/FESA
 ```
 
-FESA can be built by running CMake by running the following instructions.
+FESA can be built through CMake by running the following instructions.
 The executable will be available in `${REPO_ROOT}/build`, being `${REPO_ROOT}` the folder where this `README.md` lies. 
 
 ```
