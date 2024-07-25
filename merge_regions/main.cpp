@@ -11,9 +11,9 @@ using namespace cinolib;
 namespace fs = std::filesystem;
 
 int main(int argc, char *argv[])
-{
+{    
     std::string base_path = std::string(HOME_PATH) + "../out/";
-    uint        n_labels  = 5;
+    uint        n_labels  = 4;
     Profiler    prof;
 
     std::vector<std::string> regions{"cr_F5TERRE",
@@ -30,7 +30,6 @@ int main(int argc, char *argv[])
                                      "cr_FBORMIDE",
                                      "cr_FSAVONESE",
                                      "cr_FIMPERIESE"};
-
 
     for (uint label = 0; label<n_labels; ++label) {
         prof.push("Processing label " + std::to_string(label));
@@ -50,8 +49,8 @@ int main(int argc, char *argv[])
             for (uint pid=0; pid<m.num_polys(); ++pid) {
                 res.poly_data(pid) = m.poly_data(pid);
             }
+            int offset = m.num_polys();
             for (uint pid=0; pid<m2.num_polys(); ++pid) {
-                int offset = m.num_polys();
                 res.poly_data(offset + pid) = m2.poly_data(pid);
             }
 
@@ -67,7 +66,7 @@ int main(int argc, char *argv[])
             m = res;
             ++count;
         }
-        prof.pop(true, "regions found: " + std::to_string(count));
+        prof.pop(true, " regions found: " + std::to_string(count));
         std::cout << std::endl;
     }
 
