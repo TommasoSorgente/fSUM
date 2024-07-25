@@ -33,7 +33,6 @@ int main(int argc, char *argv[])
 
 
     for (uint label = 0; label<n_labels; ++label) {
-
         prof.push("Processing label " + std::to_string(label));
         uint count = 0;
         Polygonmesh<> m;

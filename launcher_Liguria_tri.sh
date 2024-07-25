@@ -1,8 +1,8 @@
 #!/bin/bash
 
 data_folder="data/Liguria_tri/"
-FESA="build/Qt_6_7_2_for_macOS-Release/FESA"
-#FESA ="build/Desktop_Qt_6_7_2-Release/FESA"
+#FESA="build/Qt_6_7_2_for_macOS-Release/FESA"
+FESA="build/Desktop_Qt_6_7_2-Release/FESA"
 
 regions=("cr_F5TERRE" 
 	 "cr_FARENZANO" 
@@ -22,7 +22,6 @@ regions=("cr_F5TERRE"
 
 mesh_name="mesh_tri.obj"
 field_name="cr_mean"
-n_labels=5
 
 for r in ${regions[@]}; do
     mesh=${data_folder}${r}"/"${mesh_name}
