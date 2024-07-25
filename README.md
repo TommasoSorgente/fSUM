@@ -25,10 +25,10 @@ make
 
 **Content of the repository:**
 
+ - `data` folder containing the data used in the paper.
+ - `external` folder containing links to external libraries.
+ - `src` folder containing the source code.
+ - `merge_regions` post-processing routine for merging regions into larger domains (used for the _Liguria_ example).
  - `CMakeLists.txt` CMake file to compile the code.
  - `parameters.run` file containing all the parameters involved in the algorithm.
  - `main.cpp` sample program that reads input parameters, partitions the mesh and optionally displays it in a graphical interface.
- - `src` folder containing the source code.
- - `data` folder containing the data used in the paper.
- - `external` folder containing links to external libraries.
-
