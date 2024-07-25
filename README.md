@@ -5,7 +5,6 @@ FESA is an algorithm for partitioning a planar or volumetric domain, discretized
 
 **How to get it:** 
  - clone with '--recursive' to get the cinolib library as well
- - install the library 'shapelib' and specify its path in 'CMakeLists.txt'
  - compile with cmake
 
 **Content of the repository:**
