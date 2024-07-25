@@ -7,7 +7,7 @@ FESA: _Field-Driven Enriched Segmentation Algorithm_ is an algorithm for partiti
 Please use --recursive when cloning this repository:
 
 ```
-git clone --recursive https://github.com/TommasoSorgente/FESA
+git clone --recursive git@github.com:TommasoSorgente/FESA.git
 ```
 
 FESA can be built through CMake by running the following instructions.
