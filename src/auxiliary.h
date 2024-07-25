@@ -297,7 +297,8 @@ void print_regions_shp(Polygonmesh<> &m, const std::unordered_map<int, std::vect
 
         for (uint j = 0; j < verts.size(); ++j) {
             uint n = verts.at(j).size();
-            double x[n], y[n];
+            double *x = new double(n);
+            double *y = new double(n);
             uint count = 0;
 
             // polygon vertices coordinates

@@ -1,3 +1,6 @@
 [submodule "cinolib"]
-	path = cinolib
+	path = external/cinolib
 	url = https://github.com/mlivesu/cinolib
+[submodule "external/shapelib"]
+	path = external/shapelib
+	url = https://github.com/OSGeo/shapelib.git
