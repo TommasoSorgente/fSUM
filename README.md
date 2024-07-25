@@ -11,9 +11,13 @@ Please, use --recursive when cloning this repository:
 In the following, please consider ${REPO_ROOT} variable as the folder where this README.md lies. FESA can be built by running CMake, and the FESA executable will be available in the ${REPO_ROOT}/build folder.
 
 `cd ${REPO_ROOT}`
+
 `mkdir build`
+
 `cd build`
+
 `cmake ..`
+
 `make`
 
 **Content of the repository:**
