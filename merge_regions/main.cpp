@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
                                      "cr_FSAVONESE",
                                      "cr_FIMPERIESE"};
 
-    for (uint label = 0; label<n_labels; ++label) {
+    for (uint label=0; label<n_labels; ++label) {
         prof.push("Processing label " + std::to_string(label));
         uint count = 0;
         Polygonmesh<> m;
@@ -39,8 +39,10 @@ int main(int argc, char *argv[])
         for (uint rid=0; rid<regions.size(); ++rid) {
             std::string region_name = base_path + regions.at(rid) + "/regions_off/region_"
                                       + std::to_string(label) + ".off";
-            if (!fs::exists(region_name))
+            if (!fs::exists(region_name)) {
+                std::cout << "Warning: region " << region_name << " does not exist!" << std::endl;
                 continue;
+            }
 
             Polygonmesh<> m2(region_name.c_str());
             Polygonmesh<> res;
