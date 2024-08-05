@@ -119,7 +119,8 @@ void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
         label_vec.push_back(l.first);
     }
 
-    print_regions_csv(m, labels_polys_map, label_vec, output_path, prof);
+    print_verts_csv(m, labels_polys_map, label_vec, output_path, prof);
+    print_cells_csv(m, labels_polys_map, label_vec, output_path, prof);
     print_regions_shp(m, labels_polys_map, label_vec, output_path, prof);
 
     restore_original_labels(m);
@@ -145,7 +146,7 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
     for (auto &l : labels_polys_map) {
         label_vec.push_back(l.first);
     }
-    // print_regions_csv(m, labels_polys_map, label_vec, prof);
+    // print_verts_csv(m, labels_polys_map, label_vec, prof);
     // print_regions_shp(m, labels_polys_map, label_vec, base_path, prof);
 
     restore_original_labels(m);

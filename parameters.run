@@ -1,7 +1,7 @@
 ## PARAMETERS FILE
-mesh_path     data/Liguria_tri/cr_FARENZANO/mesh_tri.obj
-field1_path   data/Liguria_tri/cr_FARENZANO/cr_mean.csv
-field2_path   data/Liguria_tri/cr_FARENZANO/cr_mean.csv
+mesh_path     data/Liguria_grid/cr_F5TERRE/mesh_grid.obj
+field1_path   data/Liguria_grid/cr_F5TERRE/cr_mean.csv
+field2_path   data/Liguria_grid/cr_mean_global.csv
 dim           2
 ##
 n_regions     4
@@ -9,7 +9,7 @@ isovals       0 15 45 90 100
 cut_mesh      0
 ##
 n_iter        50
-filter_thresh 0.1
+filter_thresh 0.5
 ##
 gui           1
 show_iso      0

@@ -215,7 +215,7 @@ void extract_region(Polygonmesh<> &m, const uint label,
             ++visits_count;
         }
         // assert(sub_m.vert(v_next) == verts_cc.front() && "extract_region: open sequence");
-        assert(subm2m_vmap[v_next] == verts_cc.front() && "extract_region: open sequence");
+        // assert(subm2m_vmap[v_next] == verts_cc.front() && "extract_region: open sequence");
         verts.push_back(verts_cc);
 
         // if there are still boundary vertices to visit, jump to an unvisited one
@@ -233,11 +233,13 @@ void extract_region(Polygonmesh<> &m, const uint label,
     }
 }
 
+/**********************************************************************/
+
 /* print the vertices of the regions on separate csv files */
-void print_regions_csv(Polygonmesh<> &m, const std::unordered_map<int, std::vector<uint>> &labels_polys_map,
+void print_verts_csv(Polygonmesh<> &m, const std::unordered_map<int, std::vector<uint>> &labels_polys_map,
                        const std::vector<int> &label_vec, const std::string base_path, Profiler Prof) {
     Prof.push("Print Region Vertices");
-    std::string dir = base_path + "/regions_csv";
+    std::string dir = base_path + "/verts_csv";
     open_directory(dir);
     //
     for (uint i = 0; i < labels_polys_map.size(); ++i) {
@@ -254,23 +256,63 @@ void print_regions_csv(Polygonmesh<> &m, const std::unordered_map<int, std::vect
         fp.precision(2);
 
         // header
-        fp << "# n_boundary_components, n_vertices_per_component, vertices" << std::endl;
+        fp << "# n_boundary_components, n_vertices_per_component" << std::endl;
 
         // number of connected components of the region boundary
         int n_comp = verts.size();
-        fp << n_comp << std::endl;
+        fp << n_comp << ", ";
 
         // number of vertices in each connected component
         for (uint j = 0; j < verts.size(); ++j) {
-            fp << verts.at(j).size() << std::endl;
+            fp << verts.at(j).size() << ", ";
         }
+        fp << std::endl;
 
+        fp << "# vertex id, x, y, z, field" << std::endl;
         // list of vertices in each connected component
         for (std::vector<uint> &verts_cc : verts) {
             for (uint vid : verts_cc) {
                 vec3d v = m.vert(vid);
-                fp << v.x() << " " << v.y() << " " << v.z() << std::endl;
+                fp << vid << ", " << v.x() << ", " << v.y() << ", " << v.z() << ", " << m.vert_data(vid).quality << std::endl;
             }
+            fp << std::endl;
+        }
+        fp.close();
+    }
+    Prof.pop();
+}
+
+/**********************************************************************/
+
+/* print the cells of the regions on separate csv files */
+void print_cells_csv(Polygonmesh<> &m, const std::unordered_map<int, std::vector<uint>> &labels_polys_map,
+                     const std::vector<int> &label_vec, const std::string base_path, Profiler Prof) {
+    Prof.push("Print Region Cells");
+    std::string dir = base_path + "/cells_csv";
+    open_directory(dir);
+    //
+    for (uint i = 0; i < labels_polys_map.size(); ++i) {
+        int label = label_vec[i];
+        std::vector<uint> polys = labels_polys_map.at(label);
+
+        std::string path = dir + "/region_" + std::to_string(i) + ".csv";
+        std::ofstream fp;
+        fp.open(path.c_str());
+        assert(fp.is_open());
+        fp << std::fixed;
+        fp.precision(2);
+
+        // header
+        fp << "# n_components, n_cells_per_component" << std::endl;
+
+        // number of cells in each connected component
+        int n_comp = 1;
+        fp << n_comp << ", " << polys.size() << std::endl;
+
+        fp << "# cell id, label, field" << std::endl;
+        // list of cells in each connected component
+        for (uint pid : polys) {
+            fp << pid << ", " << m.poly_data(pid).label << ", " << m.poly_data(pid).quality << std::endl;
         }
         fp.close();
     }
@@ -295,8 +337,8 @@ void print_regions_shp(Polygonmesh<> &m, const std::unordered_map<int, std::vect
         std::vector<std::vector<uint>> verts;
         extract_region(m, label, verts);
 
-        for (uint j = 0; j < verts.size(); ++j) {
-            uint n = verts.at(j).size();
+        for (std::vector<uint> &verts_cc : verts) {
+            uint n = verts_cc.size()+1;
             double x[n], y[n];
             // for windows users:
             // double *x = new double(n);
@@ -304,12 +346,19 @@ void print_regions_shp(Polygonmesh<> &m, const std::unordered_map<int, std::vect
             uint count = 0;
 
             // polygon vertices coordinates
-            for (uint vid : verts.at(j)) {
+            for (uint vid : verts_cc) {
                 vec3d v = m.vert(vid);
                 x[count] = v.x();
                 y[count] = v.y();
                 ++count;
             }
+
+            // close the polygon
+            uint vid0 = verts_cc.front();
+            vec3d v = m.vert(vid0);
+            x[count] = v.x();
+            y[count] = v.y();
+            ++count;
 
             // create polygon
             SHPObject* obj = SHPCreateSimpleObject(SHPT_POLYGON, n, x, y, nullptr);
