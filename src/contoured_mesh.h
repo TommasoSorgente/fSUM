@@ -56,6 +56,7 @@ private:
     Profiler prof;
     bool verbose;
     std::string output_path;
+    Statistics stats;
 
     /* load the scalar field and assign a field value to cells and vertices */
     template<class M, class V, class E, class P> inline

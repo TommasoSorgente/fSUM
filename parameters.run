@@ -15,7 +15,7 @@ gui           1
 show_iso      0
 out_path      out/
 out_format    -
-verbose       1
+verbose       0
 
 ## LEGEND
 ##

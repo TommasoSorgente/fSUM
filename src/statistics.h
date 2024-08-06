@@ -6,8 +6,6 @@
 #include <cinolib/profiler.h>
 #include <cinolib/connected_components.h>
 
-#include "../src/auxiliary.h"
-
 using namespace cinolib;
 
 /* class for printing geometrical and statistical information about the regions of the partition */
@@ -21,15 +19,17 @@ private:
   Profiler Prof;
 
 public:
-  Statistics(std::string output_path, std::vector<double> perc, std::vector<double> vals,
-             std::unordered_map<int, std::vector<uint>> map, Profiler p) {
-    base_path = output_path;
-    perc_vals = perc;
-    isovals = vals;
-    labels_polys_map = map;
-    Prof = p;
-  }
+  Statistics() {}
   ~Statistics() {}
+
+  void init(std::string output_path, std::vector<double> perc, std::vector<double> vals,
+            std::unordered_map<int, std::vector<uint>> map, Profiler p) {
+      base_path = output_path;
+      perc_vals = perc;
+      isovals = vals;
+      labels_polys_map = map;
+      Prof = p;
+  }
 
   template <class M, class V, class E, class P>
   inline void compute_stats(AbstractMesh<M, E, V, P> &m);
@@ -49,6 +49,8 @@ public:
 };
 
 /**********************************************************************/
+
+#include "auxiliary.h"
 
 template <class M, class V, class E, class P>
 inline void Statistics::compute_stats(AbstractMesh<M, E, V, P> &m) {

@@ -1,5 +1,4 @@
 #include "contoured_mesh.h"
-#include "read_parameters.h"
 
 /**********************************************************************/
 /*************************** PUBLIC METHODS ***************************/
@@ -101,7 +100,7 @@ template<class M, class V, class E, class P> inline
 void ContouredMesh::analyze(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 {
     prof.push("FESA::analyze");
-    Statistics stats(output_path, Par.get_ISOVALS(), isovals, labels_polys_map, prof);
+    stats.init(output_path, Par.get_ISOVALS(), isovals, labels_polys_map, prof);
     stats.compute_stats(m);
     stats.print_stats(m);
     prof.pop();
@@ -112,48 +111,32 @@ void ContouredMesh::analyze(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
 {
     prof.push("FESA::output");
-
     update_labels_polys_map(m, labels_polys_map);
-    std::vector<int> label_vec;
-    for (auto &l : labels_polys_map) {
-        label_vec.push_back(l.first);
-    }
 
-    print_verts_csv(m, labels_polys_map, label_vec, output_path, prof);
-    print_cells_csv(m, labels_polys_map, label_vec, output_path, prof);
-    print_regions_shp(m, labels_polys_map, label_vec, output_path, prof);
+    // print verts and cells data (label and field) in a csv file
+    print_verts_csv(m, output_path + "/verts_data.csv", prof);
+    print_cells_csv(m, tmp_labels_map, output_path + "/cells_data.csv", prof);
 
+    // generate a shapefile containing the iso-regions boundaries
+    print_regions_shp(m, stats, labels_polys_map, output_path + "/regions", prof);
+
+    // save a mesh for each iso-region
     restore_original_labels(m);
-    update_labels_polys_map(m, labels_polys_map);
-    std::vector<int> label_vec2;
-    for (auto &l : labels_polys_map) {
-        label_vec2.push_back(l.first);
-    }
-
-    print_regions_off(m, labels_polys_map, label_vec2, output_path, prof);
-    // print_regions_bnd(m, labels_polys_map, label_vec2, output_path, prof);
-
-    print_labels(m, output_path);
-    // save_mesh(m, output_path, Par.get_OUT_FORMAT());
-
+    print_regions_off(m, tmp_labels_map, Par.get_N_REGIONS(), output_path, prof);
     prof.pop();
 }
 
 void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 {
     prof.push("FESA::output");
-    std::vector<int> label_vec;
-    for (auto &l : labels_polys_map) {
-        label_vec.push_back(l.first);
-    }
-    // print_verts_csv(m, labels_polys_map, label_vec, prof);
-    // print_regions_shp(m, labels_polys_map, label_vec, base_path, prof);
+    // print verts and cells data (label and field) in a csv file
+    update_labels_polys_map(m, labels_polys_map);
+    print_verts_csv(m, output_path + "/verts_data.csv", prof);
+    print_cells_csv(m, tmp_labels_map, output_path + "/cells_data.csv", prof);
 
+    // save a mesh for each iso-region
     restore_original_labels(m);
-
-    print_labels(m, output_path);
-    // save_mesh(m, output_path, Par.get_OUT_FORMAT());
-
+    print_regions_off(m, tmp_labels_map, Par.get_N_REGIONS(), output_path, prof);
     prof.pop();
 }
 
