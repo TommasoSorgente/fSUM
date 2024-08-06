@@ -5,8 +5,8 @@
 
 data_folder="./"
 #FESA="../../build/FESA"
-#FESA="../../build/Qt_6_7_2_for_macOS-Release/FESA"
-FESA="../../build/Desktop_Qt_6_7_2-Debug/FESA"
+FESA="../../build/Qt_6_7_2_for_macOS-Release/FESA"
+#FESA="../../build/Desktop_Qt_6_7_2-Release/FESA"
 
 regions=("cr_F5TERRE" 
 	 "cr_FARENZANO" 

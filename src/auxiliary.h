@@ -301,16 +301,16 @@ void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
         SHPClose(hSHP);
         return;
     }
-    DBFAddField(hDBF, "Label",          FTInteger, 50,   0);
-    DBFAddField(hDBF, "N. of Cells",    FTInteger, 1e10, 0);
-    DBFAddField(hDBF, "Point Inside",   FTString,  1e10, 0);
-    DBFAddField(hDBF, "Size (Area/Volume)", FTInteger, 1e10, 0);
-    DBFAddField(hDBF, "Field Mean",     FTDouble, 1e4, 3);
-    DBFAddField(hDBF, "Field StDev",    FTDouble, 1e4, 3);
-    DBFAddField(hDBF, "Field Min",      FTDouble, 1e4, 3);
-    DBFAddField(hDBF, "Field Max",      FTDouble, 1e4, 3);
-    DBFAddField(hDBF, "Isovalue Min",   FTDouble, 1e4, 3);
-    DBFAddField(hDBF, "Isovalue Max",   FTDouble, 1e4, 3);
+    DBFAddField(hDBF, "Label",      FTInteger, 50,  0);
+    DBFAddField(hDBF, "N. Cells",   FTInteger, 1e9, 0);
+    DBFAddField(hDBF, "Point",      FTString,  1e9, 0);
+    DBFAddField(hDBF, "Size",       FTInteger, 1e9, 0);
+    DBFAddField(hDBF, "F Mean",     FTDouble,  1e4, 3);
+    DBFAddField(hDBF, "F StDev",    FTDouble,  1e4, 3);
+    DBFAddField(hDBF, "F Min",      FTDouble,  1e4, 3);
+    DBFAddField(hDBF, "F Max",      FTDouble,  1e4, 3);
+    DBFAddField(hDBF, "Isoval Min", FTDouble,  1e4, 3);
+    DBFAddField(hDBF, "Isoval Max", FTDouble,  1e4, 3);
 
     uint i = 0;
     for (auto &l : labels_polys_map) {
@@ -350,33 +350,33 @@ void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
                 std::cerr << "Error writing Label attribute to DBF file." << std::endl;
             }
             if (!DBFWriteIntegerAttribute(hDBF, objId, 1, stats.card_vec[i])) {
-                std::cerr << "Error writing Label attribute to DBF file." << std::endl;
+                std::cerr << "Error writing N. Cells attribute to DBF file." << std::endl;
             }
             vec3d p = stats.pos_vec[i];
             std::string ss = std::to_string(p.x()) + ", " + std::to_string(p.y()) + ", " + std::to_string(p.z());
             if (!DBFWriteStringAttribute(hDBF, objId, 2, ss.c_str())) {
-                std::cerr << "Error writing Label attribute to DBF file." << std::endl;
+                std::cerr << "Error writing Point attribute to DBF file." << std::endl;
             }
             if (!DBFWriteIntegerAttribute(hDBF, objId, 3, stats.size_vec[i])) {
-                std::cerr << "Error writing Label attribute to DBF file." << std::endl;
+                std::cerr << "Error writing Size attribute to DBF file." << std::endl;
             }
             if (!DBFWriteDoubleAttribute(hDBF, objId, 4, stats.mean_vec[i])) {
-                std::cerr << "Error writing Area attribute to DBF file." << std::endl;
+                std::cerr << "Error writing F Mean attribute to DBF file." << std::endl;
             }
             if (!DBFWriteDoubleAttribute(hDBF, objId, 5, stats.stdev_vec[i])) {
-                std::cerr << "Error writing Area attribute to DBF file." << std::endl;
+                std::cerr << "Error writing F StDev attribute to DBF file." << std::endl;
             }
             if (!DBFWriteDoubleAttribute(hDBF, objId, 6, stats.minmax_vec[i].first)) {
-                std::cerr << "Error writing Area attribute to DBF file." << std::endl;
+                std::cerr << "Error writing F Min attribute to DBF file." << std::endl;
             }
             if (!DBFWriteDoubleAttribute(hDBF, objId, 7, stats.minmax_vec[i].second)) {
-                std::cerr << "Error writing Area attribute to DBF file." << std::endl;
+                std::cerr << "Error writing F Max attribute to DBF file." << std::endl;
             }
             if (!DBFWriteDoubleAttribute(hDBF, objId, 8, stats.iso_vec[i].first)) {
-                std::cerr << "Error writing Area attribute to DBF file." << std::endl;
+                std::cerr << "Error writing Isoval Min attribute to DBF file." << std::endl;
             }
             if (!DBFWriteDoubleAttribute(hDBF, objId, 9, stats.iso_vec[i].second)) {
-                std::cerr << "Error writing Area attribute to DBF file." << std::endl;
+                std::cerr << "Error writing Isoval Max attribute to DBF file." << std::endl;
             }
             SHPDestroyObject(obj);
         }

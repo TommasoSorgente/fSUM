@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
             print_cells_csv(res, tmp_labels_map, output_path + "/cells_data.csv", prof);
 
             // generate a shapefile containing the iso-regions boundaries
-            print_regions_shp(res, stats, labels_polys_map, output_path + "/regions.shp", prof);
+            print_regions_shp(res, stats, labels_polys_map, output_path + "/regions", prof);
 
             // save a mesh for each iso-region
             print_regions_off(res, tmp_labels_map, n_labels, output_path, prof);
