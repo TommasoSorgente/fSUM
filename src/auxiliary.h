@@ -282,6 +282,12 @@ void print_cells_csv(AbstractMesh<M,E,V,P> &m, const std::unordered_map<int, int
 
 /**********************************************************************/
 
+void shp_poly_add_vert(const vec3d &v, int &count, std::vector<double> &x, std::vector<double> &y) {
+    x[count] = v.x();
+    y[count] = v.y();
+    ++count;
+}
+
 /* print the vertices of the regions on separate shapefiles */
 void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
                        const std::unordered_map<int, std::vector<uint>> &labels_polys_map,
@@ -317,6 +323,64 @@ void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
         std::vector<std::vector<uint>> verts;
         extract_region(m, l.first, verts);
 
+        // find the outer boundary (the connected component containing more vertices)
+        // NOTE: it would be safer to pick the one with the greatest area
+        auto it = std::max_element(verts.begin(), verts.end(),
+                                   [](const std::vector<uint>& a, const std::vector<uint>& b) {
+                                       return a.size() < b.size();
+                                   });
+        size_t index = std::distance(verts.begin(), it);
+        std::vector<uint> outer_verts = verts.at(index);
+        if (it != verts.end()) {
+            verts.erase(it);
+        }
+
+        // Determina il numero totale di vertici (anelli esterni + buchi)
+        int total_parts = 1 + verts.size();
+        std::vector<int> part_start_indices(total_parts);
+        int total_vertices = 0;
+
+        for (uint &verts : outer_verts) {
+            part_start_indices[total_vertices] = total_vertices;
+            total_vertices += verts.size() + 1; // +1 per chiudere il poligono
+        }
+
+        for (const auto &verts : verts) {
+            part_start_indices[total_vertices] = total_vertices;
+            total_vertices += verts.size() + 1; // +1 per chiudere il buco
+        }
+
+        std::vector<double> x(total_vertices), y(total_vertices);
+        int count = 0;
+
+        // Anelli esterni (poligoni)
+        for (const auto &verts : outer_verts) {
+            for (uint vid : verts) {
+                shp_poly_add_vert(m.vert(vid), count, x, y);
+            }
+            // Chiudi l'anello esterno
+            vec3d v = m.vert(verts.front());
+            shp_poly_add_vert(v, count, x, y);
+        }
+
+        // Anelli interni (buchi)
+        for (const auto &verts : inner_verts) {
+            for (uint vid : verts) {
+                shp_poly_add_vert(m.vert(vid), count, x, y);
+            }
+            // Chiudi l'anello interno
+            vec3d v = m.vert(verts.front());
+            shp_poly_add_vert(v, count, x, y);
+        }
+
+        // Crea l'oggetto poligono con buchi
+        SHPObject* obj = SHPCreateObject(SHPT_POLYGON, -1, total_parts, part_start_indices.data(), nullptr, total_vertices, x.data(), y.data(), nullptr, nullptr);
+
+
+
+        // std::vector<std::vector<uint>> verts;
+        extract_region(m, l.first, verts);
+
         for (std::vector<uint> &verts_cc : verts) {
             uint n = verts_cc.size()+1;
             double x[n], y[n];
@@ -327,18 +391,13 @@ void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
 
             // polygon vertices coordinates
             for (uint vid : verts_cc) {
-                vec3d v = m.vert(vid);
-                x[count] = v.x();
-                y[count] = v.y();
-                ++count;
+                shp_poly_add_vert(m.vert(vid), count, x, y);
             }
 
             // close the polygon
             uint vid0 = verts_cc.front();
             vec3d v = m.vert(vid0);
-            x[count] = v.x();
-            y[count] = v.y();
-            ++count;
+            shp_poly_add_vert(v, count, x, y);
 
             // create polygon
             SHPObject* obj = SHPCreateSimpleObject(SHPT_POLYGON, n, x, y, nullptr);
