@@ -282,7 +282,7 @@ void print_cells_csv(AbstractMesh<M,E,V,P> &m, const std::unordered_map<int, int
 
 /**********************************************************************/
 
-void shp_poly_add_vert(const vec3d &v, int &count, std::vector<double> &x, std::vector<double> &y) {
+void shp_poly_add_vert(const vec3d &v, uint &count, std::vector<double> &x, std::vector<double> &y) {
     x[count] = v.x();
     y[count] = v.y();
     ++count;
@@ -320,125 +320,97 @@ void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
 
     uint i = 0;
     for (auto &l : labels_polys_map) {
-        std::vector<std::vector<uint>> verts;
-        extract_region(m, l.first, verts);
+        std::vector<std::vector<uint>> verts_loops;
+        extract_region(m, l.first, verts_loops);
 
-        // find the outer boundary (the connected component containing more vertices)
+        // find the outer loop (the connected component containing more vertices)
         // NOTE: it would be safer to pick the one with the greatest area
-        auto it = std::max_element(verts.begin(), verts.end(),
+        auto it = std::max_element(verts_loops.begin(), verts_loops.end(),
                                    [](const std::vector<uint>& a, const std::vector<uint>& b) {
                                        return a.size() < b.size();
                                    });
-        size_t index = std::distance(verts.begin(), it);
-        std::vector<uint> outer_verts = verts.at(index);
-        if (it != verts.end()) {
-            verts.erase(it);
+        size_t index = std::distance(verts_loops.begin(), it);
+        std::vector<uint> outer_loop = verts_loops.at(index);
+        // remove outer_loop from the list
+        if (it != verts_loops.end()) {
+            verts_loops.erase(it);
         }
 
-        // Determina il numero totale di vertici (anelli esterni + buchi)
-        int total_parts = 1 + verts.size();
-        std::vector<int> part_start_indices(total_parts);
+        // total number of vertices (outer_loop + inner_loops)
+        int total_loops = 1 + verts_loops.size(); // +1 for outer_loop
+        std::vector<int> loop_start_indices(total_loops);
         int total_vertices = 0;
 
-        for (uint &verts : outer_verts) {
-            part_start_indices[total_vertices] = total_vertices;
-            total_vertices += verts.size() + 1; // +1 per chiudere il poligono
-        }
+        loop_start_indices.front() = total_vertices;
+        total_vertices += outer_loop.size() + 1; // +1 for closing the loop
 
-        for (const auto &verts : verts) {
-            part_start_indices[total_vertices] = total_vertices;
-            total_vertices += verts.size() + 1; // +1 per chiudere il buco
+        for (int i=0; i<verts_loops.size(); ++i) {
+            loop_start_indices.at(i+1) = total_vertices;
+            total_vertices += verts_loops.at(i).size() + 1; // +1 for closing the loop
         }
 
         std::vector<double> x(total_vertices), y(total_vertices);
-        int count = 0;
+        // for windows users:
+        // double *x = new double(n);
+        // double *y = new double(n);
+        uint count = 0;
 
-        // Anelli esterni (poligoni)
-        for (const auto &verts : outer_verts) {
-            for (uint vid : verts) {
+        // outer_loop
+        for (uint vid : outer_loop) {
+            shp_poly_add_vert(m.vert(vid), count, x, y);
+        }
+        vec3d v = m.vert(outer_loop.front());
+        shp_poly_add_vert(v, count, x, y);
+
+        // inner_loop
+        for (const auto &loop : verts_loops) {
+            for (uint vid : loop) {
                 shp_poly_add_vert(m.vert(vid), count, x, y);
             }
-            // Chiudi l'anello esterno
-            vec3d v = m.vert(verts.front());
+            vec3d v = m.vert(loop.front());
             shp_poly_add_vert(v, count, x, y);
         }
 
-        // Anelli interni (buchi)
-        for (const auto &verts : inner_verts) {
-            for (uint vid : verts) {
-                shp_poly_add_vert(m.vert(vid), count, x, y);
-            }
-            // Chiudi l'anello interno
-            vec3d v = m.vert(verts.front());
-            shp_poly_add_vert(v, count, x, y);
+        // create the shape object
+        SHPObject* obj = SHPCreateObject(SHPT_POLYGON, -1, total_loops, loop_start_indices.data(),
+                                         nullptr, total_vertices, x.data(), y.data(), nullptr, nullptr);
+
+        // write polygon on file with attributes
+        int objId = SHPWriteObject(hSHP, -1, obj);
+
+        if (!DBFWriteIntegerAttribute(hDBF, objId, 0, stats.label_vec[i])) {
+            std::cerr << "Error writing Label attribute to DBF file." << std::endl;
         }
-
-        // Crea l'oggetto poligono con buchi
-        SHPObject* obj = SHPCreateObject(SHPT_POLYGON, -1, total_parts, part_start_indices.data(), nullptr, total_vertices, x.data(), y.data(), nullptr, nullptr);
-
-
-
-        // std::vector<std::vector<uint>> verts;
-        extract_region(m, l.first, verts);
-
-        for (std::vector<uint> &verts_cc : verts) {
-            uint n = verts_cc.size()+1;
-            double x[n], y[n];
-            // for windows users:
-            // double *x = new double(n);
-            // double *y = new double(n);
-            uint count = 0;
-
-            // polygon vertices coordinates
-            for (uint vid : verts_cc) {
-                shp_poly_add_vert(m.vert(vid), count, x, y);
-            }
-
-            // close the polygon
-            uint vid0 = verts_cc.front();
-            vec3d v = m.vert(vid0);
-            shp_poly_add_vert(v, count, x, y);
-
-            // create polygon
-            SHPObject* obj = SHPCreateSimpleObject(SHPT_POLYGON, n, x, y, nullptr);
-
-            // write polygon on file
-            int objId = SHPWriteObject(hSHP, -1, obj);
-
-            if (!DBFWriteIntegerAttribute(hDBF, objId, 0, stats.label_vec[i])) {
-                std::cerr << "Error writing Label attribute to DBF file." << std::endl;
-            }
-            if (!DBFWriteIntegerAttribute(hDBF, objId, 1, stats.card_vec[i])) {
-                std::cerr << "Error writing N. Cells attribute to DBF file." << std::endl;
-            }
-            vec3d p = stats.pos_vec[i];
-            std::string ss = std::to_string(p.x()) + ", " + std::to_string(p.y()) + ", " + std::to_string(p.z());
-            if (!DBFWriteStringAttribute(hDBF, objId, 2, ss.c_str())) {
-                std::cerr << "Error writing Point attribute to DBF file." << std::endl;
-            }
-            if (!DBFWriteIntegerAttribute(hDBF, objId, 3, stats.size_vec[i])) {
-                std::cerr << "Error writing Size attribute to DBF file." << std::endl;
-            }
-            if (!DBFWriteDoubleAttribute(hDBF, objId, 4, stats.mean_vec[i])) {
-                std::cerr << "Error writing F Mean attribute to DBF file." << std::endl;
-            }
-            if (!DBFWriteDoubleAttribute(hDBF, objId, 5, stats.stdev_vec[i])) {
-                std::cerr << "Error writing F StDev attribute to DBF file." << std::endl;
-            }
-            if (!DBFWriteDoubleAttribute(hDBF, objId, 6, stats.minmax_vec[i].first)) {
-                std::cerr << "Error writing F Min attribute to DBF file." << std::endl;
-            }
-            if (!DBFWriteDoubleAttribute(hDBF, objId, 7, stats.minmax_vec[i].second)) {
-                std::cerr << "Error writing F Max attribute to DBF file." << std::endl;
-            }
-            if (!DBFWriteDoubleAttribute(hDBF, objId, 8, stats.iso_vec[i].first)) {
-                std::cerr << "Error writing Isoval Min attribute to DBF file." << std::endl;
-            }
-            if (!DBFWriteDoubleAttribute(hDBF, objId, 9, stats.iso_vec[i].second)) {
-                std::cerr << "Error writing Isoval Max attribute to DBF file." << std::endl;
-            }
-            SHPDestroyObject(obj);
+        if (!DBFWriteIntegerAttribute(hDBF, objId, 1, stats.card_vec[i])) {
+            std::cerr << "Error writing N. Cells attribute to DBF file." << std::endl;
         }
+        vec3d p = stats.pos_vec[i];
+        std::string ss = std::to_string(p.x()) + ", " + std::to_string(p.y()) + ", " + std::to_string(p.z());
+        if (!DBFWriteStringAttribute(hDBF, objId, 2, ss.c_str())) {
+            std::cerr << "Error writing Point attribute to DBF file." << std::endl;
+        }
+        if (!DBFWriteIntegerAttribute(hDBF, objId, 3, stats.size_vec[i])) {
+            std::cerr << "Error writing Size attribute to DBF file." << std::endl;
+        }
+        if (!DBFWriteDoubleAttribute(hDBF, objId, 4, stats.mean_vec[i])) {
+            std::cerr << "Error writing F Mean attribute to DBF file." << std::endl;
+        }
+        if (!DBFWriteDoubleAttribute(hDBF, objId, 5, stats.stdev_vec[i])) {
+            std::cerr << "Error writing F StDev attribute to DBF file." << std::endl;
+        }
+        if (!DBFWriteDoubleAttribute(hDBF, objId, 6, stats.minmax_vec[i].first)) {
+            std::cerr << "Error writing F Min attribute to DBF file." << std::endl;
+        }
+        if (!DBFWriteDoubleAttribute(hDBF, objId, 7, stats.minmax_vec[i].second)) {
+            std::cerr << "Error writing F Max attribute to DBF file." << std::endl;
+        }
+        if (!DBFWriteDoubleAttribute(hDBF, objId, 8, stats.iso_vec[i].first)) {
+            std::cerr << "Error writing Isoval Min attribute to DBF file." << std::endl;
+        }
+        if (!DBFWriteDoubleAttribute(hDBF, objId, 9, stats.iso_vec[i].second)) {
+            std::cerr << "Error writing Isoval Max attribute to DBF file." << std::endl;
+        }
+        SHPDestroyObject(obj);
         ++i;
     }
     SHPClose(hSHP);

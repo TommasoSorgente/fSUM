@@ -1,6 +1,6 @@
 ## PARAMETERS FILE
-mesh_path     data/Liguria_grid/cr_F5TERRE/mesh_grid.obj
-field1_path   data/Liguria_grid/cr_F5TERRE/cr_mean.csv
+mesh_path     data/Liguria_grid/cr_FSASSELLO/mesh_grid.obj
+field1_path   data/Liguria_grid/cr_FSASSELLO/cr_mean.csv
 field2_path   data/Liguria_grid/cr_mean_global.csv
 dim           2
 ##
