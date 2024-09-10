@@ -356,6 +356,7 @@ void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
         uint count = 0;
 
         // outer_loop
+        REVERSE_VEC(outer_loop);
         for (uint vid : outer_loop) {
             shp_poly_add_vert(m.vert(vid), count, x, y);
         }
@@ -363,7 +364,8 @@ void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
         shp_poly_add_vert(v, count, x, y);
 
         // inner_loop
-        for (const auto &loop : verts_loops) {
+        for (auto &loop : verts_loops) {
+            REVERSE_VEC(loop);
             for (uint vid : loop) {
                 shp_poly_add_vert(m.vert(vid), count, x, y);
             }
