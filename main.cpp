@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     if (argc == 4) { // get mesh and fields from automatic routine
         Par.set_MESH_PATH(argv[1]);
         Par.set_FIELD1_PATH(argv[2]);
-        Par.set_FIELD2_PATH(argv[3]);
+        Par.set_FIELDG_PATH(argv[3]);
         Par.set_GUI(false);
     }
     if (Par.get_VERBOSE())

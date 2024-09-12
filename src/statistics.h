@@ -98,11 +98,11 @@ inline void Statistics::compute_stats(AbstractMesh<M, E, V, P> &m) {
 template <class M, class V, class E, class P>
 inline void Statistics::print_stats(AbstractMesh<M, E, V, P> &m) {
   Prof.push("Print Statistics");
-  std::string path = base_path + "/stats";
+  std::string path = base_path + "/subregions_stats";
   open_directory(path);
   //
   for (uint i = 0; i < labels_polys_map.size(); ++i) {
-    std::string filename = path + "/region_" + std::to_string(i) + ".csv";
+    std::string filename = path + "/subregion_" + std::to_string(label_vec[i]) + ".csv";
     std::ofstream fp;
     fp.open(filename.c_str());
     assert(fp.is_open());

@@ -10,15 +10,15 @@ void ContouredMesh::init(AbstractMesh<M,E,V,P> &m, Parameters &Par)
     prof.push("FESA::init");
     verbose = Par.get_VERBOSE();
 
-    // load mesh and scalar field
+    // load mesh and scalar fields
     m.load(Par.get_MESH_PATH().c_str());
 
-    load_field(m, Par.get_FIELD1_PATH());
-    if (Par.get_FIELD2_PATH() != "") {
-        load_global_field(Par.get_FIELD2_PATH());
+    load_field(m, Par.get_FIELD1_PATH(), field);
+    if (Par.get_FIELDG_PATH() != "") {
+        load_global_field(Par.get_FIELDG_PATH());
     } else {
         for (uint i=0; i<field.size(); ++i) {
-            field_global.push_back(field[i]);
+            global_field.push_back(field[i]);
         }
     }
     if (Par.get_GUI()) {
@@ -113,12 +113,20 @@ void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
     prof.push("FESA::output");
     update_labels_polys_map(m, labels_polys_map);
 
+    // print isovalues info
+    print_isovals_csv(m, Par.get_ISOVALS(), isovals, output_path + "/isovalues.txt", prof);
+
+    // save mesh
+    std::string domain_dir = output_path + "/domain";
+    open_directory(domain_dir);
+    m.save((domain_dir + "/domain.off").c_str());
+
     // print verts and cells data (label and field) in a csv file
-    print_verts_csv(m, output_path + "/verts_data.csv", prof);
-    print_cells_csv(m, tmp_labels_map, output_path + "/cells_data.csv", prof);
+    print_verts_csv(m, domain_dir + "/domain_verts_data.csv", prof);
+    print_cells_csv(m, tmp_labels_map, domain_dir + "/domain_cells_data.csv", prof);
 
     // generate a shapefile containing the iso-regions boundaries
-    print_regions_shp(m, stats, labels_polys_map, output_path + "/regions", prof);
+    print_regions_shp(m, stats, labels_polys_map, domain_dir + "/domain", prof);
 
     // save a mesh for each iso-region
     restore_original_labels(m);
@@ -129,10 +137,19 @@ void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
 void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 {
     prof.push("FESA::output");
-    // print verts and cells data (label and field) in a csv file
     update_labels_polys_map(m, labels_polys_map);
-    print_verts_csv(m, output_path + "/verts_data.csv", prof);
-    print_cells_csv(m, tmp_labels_map, output_path + "/cells_data.csv", prof);
+
+    // print isovalues info
+    print_isovals_csv(m, Par.get_ISOVALS(), isovals, output_path + "/isovalues.txt", prof);
+
+    // save mesh
+    std::string domain_dir = output_path + "/domain";
+    open_directory(domain_dir);
+    m.save((domain_dir + "/domain.vtk").c_str());
+
+    // print verts and cells data (label and field) in a csv file
+    print_verts_csv(m, output_path + "/domain_verts_data.csv", prof);
+    print_cells_csv(m, tmp_labels_map, output_path + "/domain_cells_data.csv", prof);
 
     // save a mesh for each iso-region
     restore_original_labels(m);
@@ -145,7 +162,7 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 /**********************************************************************/
 
 template<class M, class V, class E, class P> inline
-void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path)
+void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, std::map<uint,double> &field)
 {
     prof.push("Input field:  " + field_path);
     // load the field from file
@@ -161,12 +178,12 @@ void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field
     assert(m.num_polys() <= field.size());
 
     // set poly_data.quality from the field values
-    PARALLEL_FOR(0, m.num_polys(), 1000, [this, &m](int pid) {
-       m.poly_data(pid).quality = field.at(pid);
-    });
+    for (uint pid=0; pid<m.num_polys(); ++pid) {
+        m.poly_data(pid).quality = field.at(pid);
+    }
 
     // set vert_data.uvw.u and vert_data.color from the weighted average of polys quality
-    PARALLEL_FOR(0, m.num_verts(), 1000, [this, &m](int vid) {
+    for (uint vid=0; vid<m.num_verts(); ++vid) {
         double value = 0., mass  = 0.;
         for (uint pid : m.adj_v2p(vid)) {
             double coeff = m.poly_mass(pid) / m.verts_per_poly(pid);
@@ -175,30 +192,30 @@ void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field
         }
         value /= mass;
         m.vert_data(vid).uvw.u() = value;
-    });
+    }
     prof.pop();
 }
 
 template<class M, class V, class E, class P> inline
 void ContouredMesh::load_second_field(AbstractMesh<M,E,V,P> &m, const std::string field_path)
 {
-    prof.push("Input field2: \t" + field_path);
+    prof.push("Input second_field: \t" + field_path);
     // load the field from file
     std::ifstream fp(field_path.c_str());
     assert(fp.is_open());
     double f;
     int _pid = 0;
     while (fp >> f) {
-        field2[_pid] = f;
+        second_field[_pid] = f;
         ++_pid;
     }
     fp.close();
-    assert(m.num_polys() <= field2.size());
+    assert(m.num_polys() <= second_field.size());
 
     // store the field value in each poly
     std::vector<double> poly_heights(m.num_polys());
     PARALLEL_FOR(0, poly_heights.size(), 1000, [this, &poly_heights](int pid) {
-        poly_heights.at(pid) = field2.at(pid);
+        poly_heights.at(pid) = second_field.at(pid);
     });
 
     // set vert.y to a weighted average of the neighboring poly values
@@ -222,11 +239,11 @@ void ContouredMesh::load_global_field(const std::string field_path)
     assert(fp.is_open());
     double f;
     while (fp >> f) {
-        field_global.push_back(f + field_correction);
+        global_field.push_back(f + field_correction);
     }
     fp.close();
 
-    auto minmax = minmax_element(field_global.begin(), field_global.end());
+    auto minmax = minmax_element(global_field.begin(), global_field.end());
     field_min = *minmax.first;
     field_max = *minmax.second;
 
@@ -269,7 +286,7 @@ void ContouredMesh::compute_iso(const int n_regions, const std::vector<double> &
             assert(input_vals.at(i) < input_vals.at(i+1) && "input_vals are not ordered");
         }
         for (int val : input_vals) {
-            double perc = percentile(field_global, val);
+            double perc = percentile(global_field, val);
             isovals.push_back(perc);
             if (verbose) cout << "\tiso-value at percentile " << val << ": \t" << perc << endl;
         }

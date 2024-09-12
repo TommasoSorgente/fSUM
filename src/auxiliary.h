@@ -237,6 +237,29 @@ void extract_region(Polygonmesh<> &m, const uint label,
 
 /**********************************************************************/
 
+/* print isovalues info */
+template<class M, class V, class E, class P> inline
+void print_isovals_csv(AbstractMesh<M,E,V,P> &m, const std::vector<double> &percentiles, const std::vector<double> &isovals, const std::string filename, Profiler Prof) {
+    Prof.push("Print Isovalues");
+    std::ofstream fp;
+    fp.open(filename.c_str());
+    assert(fp.is_open());
+    fp << std::fixed;
+    fp.precision(2);
+
+    fp << "# percentile, isovalue, label" << std::endl;
+    for (uint i=0; i<percentiles.size(); ++i) {
+        fp << percentiles.at(i) << ", " << isovals.at(i);
+        if (i < isovals.size() - 1)
+            fp << ", " << i;
+        fp << std::endl;
+    }
+    fp.close();
+    Prof.pop();
+}
+
+/**********************************************************************/
+
 /* print the vertices of the regions on separate csv files */
 template<class M, class V, class E, class P> inline
 void print_verts_csv(AbstractMesh<M,E,V,P> &m, const std::string filename, Profiler Prof) {
@@ -269,12 +292,14 @@ void print_cells_csv(AbstractMesh<M,E,V,P> &m, const std::unordered_map<int, int
     fp << std::fixed;
     fp.precision(2);
 
-    fp << "# cell id, label1, label2, field" << std::endl;
+    fp << "# cell id, centroid x, centroid y, centroid z, region, subregion, field" << std::endl;
     for (uint pid=0; pid<m.num_polys(); ++pid) {
         int tmp_label = m.poly_data(pid).label;
         auto it = tmp_labels_map.find(tmp_label);
         int old_label = (it == tmp_labels_map.end()) ? tmp_label : it->second;
-        fp << pid << ", " << old_label << ", " << tmp_label << ", " << m.poly_data(pid).quality << std::endl;
+        vec3d c = m.poly_centroid(pid);
+        fp << pid << ", " << c.x() << ", " << c.y() << ", " << c.z() << ", "
+           << old_label << ", " << tmp_label << ", " << m.poly_data(pid).quality << std::endl;
     }
     fp.close();
     Prof.pop();
@@ -426,7 +451,7 @@ void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
 void print_regions_off(Polygonmesh<> &m, const std::unordered_map<int, int> &tmp_labels_map,
                        const int n_labels, const std::string base_path, Profiler Prof) {
     Prof.push("Print Region Meshes");
-    std::string dir = base_path + "/regions_off";
+    std::string dir = base_path + "/regions";
     open_directory(dir);
 
     for (uint l=0; l<n_labels; ++l) {
@@ -461,7 +486,7 @@ void print_regions_off(Polygonmesh<> &m, const std::unordered_map<int, int> &tmp
 void print_regions_off(Polyhedralmesh<> &m, const std::unordered_map<int, int> &tmp_labels_map,
                        const int n_labels, const std::string base_path, Profiler Prof) {
     Prof.push("Print Region Meshes");
-    std::string dir = base_path + "/regions_off";
+    std::string dir = base_path + "/regions";
     open_directory(dir);
 
     for (uint l=0; l<n_labels; ++l) {

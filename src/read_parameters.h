@@ -22,6 +22,7 @@ protected:
     string mesh_path;       // path of the input mesh
     string field1_path;     // path of the input field #1
     string field2_path;     // path of the input field #2
+    string fieldG_path;     // path of the input field #2
     int    dim;             // dimension of the problem
     bool   smooth_field;    // smooth the field values by averaging
     int    n_regions;       // number of regions to be computed in the domain
@@ -44,6 +45,7 @@ protected:
         mesh_path     = "";
         field1_path   = "";
         field2_path   = "";
+        fieldG_path   = "";
         dim           = 2;
         smooth_field  = false;
         n_regions     = 1;
@@ -72,6 +74,9 @@ protected:
     void read_field2_path(ifstream & inpf)  { string s;
                                               inpf >> s;
                                               field2_path = string(HOME_PATH) + s; }
+    void read_fieldG_path(ifstream & inpf)  { string s;
+                                              inpf >> s;
+                                              fieldG_path = string(HOME_PATH) + s; }
     void read_dim(ifstream & inpf)          { inpf >> dim; }
     void read_smooth_field(ifstream & inpf) { inpf >> smooth_field; }
     void read_n_regions(ifstream & inpf)    { inpf >> n_regions; }
@@ -101,6 +106,7 @@ protected:
       if      ( keywd == "mesh_path" )      { read_mesh_path(inpf); }
       else if ( keywd == "field1_path" )    { read_field1_path(inpf); }
       else if ( keywd == "field2_path" )    { read_field2_path(inpf); }
+      else if ( keywd == "fieldG_path" )    { read_fieldG_path(inpf); }
       else if ( keywd == "dim" )            { read_dim(inpf); }
       else if ( keywd == "smooth_field" )   { read_smooth_field(inpf); }
       else if ( keywd == "n_regions" )      { read_n_regions(inpf); }
@@ -130,6 +136,7 @@ public:
     void set_MESH_PATH      (const string value)  { mesh_path = value; }
     void set_FIELD1_PATH    (const string value)  { field1_path = value; }
     void set_FIELD2_PATH    (const string value)  { field2_path = value; }
+    void set_FIELDG_PATH    (const string value)  { fieldG_path = value; }
     void set_DIM            (const int value)     { dim = value; }
     void set_SMOOTH_FIELD   (const bool value)    { smooth_field = value; }
     void set_N_REGIONS      (const int value)     { n_regions = value; }
@@ -151,6 +158,7 @@ public:
     string get_MESH_PATH ()       { return mesh_path; }
     string get_FIELD1_PATH ()     { return field1_path; }
     string get_FIELD2_PATH ()     { return field2_path; }
+    string get_FIELDG_PATH ()     { return fieldG_path; }
     int    get_DIM ()             { return dim; }
     bool   get_SMOOTH_FIELD ()    { return smooth_field; }
     int    get_N_REGIONS ()       { return n_regions; }
@@ -174,6 +182,7 @@ public:
       cout << "mesh_path: "         << mesh_path << endl;
       cout << "field1_path: "       << field1_path << endl;
       cout << "field2_path: "       << field2_path << endl;
+      cout << "fieldG_path: "       << fieldG_path << endl;
       cout << "dim: "               << dim << endl;
       cout << "smooth_field: "      << smooth_field << endl;
       cout << "n_regions: "         << n_regions << endl;

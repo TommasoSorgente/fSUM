@@ -49,10 +49,10 @@ public:
 private:
     double field_correction = 0.;
     double field_min, field_max;
-    std::map<uint,double> field, field2;
-    std::vector<double> field_global;
-    std::unordered_map<int, std::vector<uint>> labels_polys_map;
-    std::unordered_map<int, int> tmp_labels_map;
+    std::map<uint,double> field, second_field;
+    std::vector<double> global_field;
+    std::unordered_map<int, std::vector<uint>> labels_polys_map; // <label, polys with that label>
+    std::unordered_map<int, int> tmp_labels_map; // <region label, subregion label>
     Profiler prof;
     bool verbose;
     std::string output_path;
@@ -60,7 +60,7 @@ private:
 
     /* load the scalar field and assign a field value to cells and vertices */
     template<class M, class V, class E, class P> inline
-    void load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path);
+    void load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, std::map<uint,double> &field);
     void load_global_field(const std::string field_path);
     template<class M, class V, class E, class P> inline
     void load_second_field(AbstractMesh<M,E,V,P> &m, const std::string field_path);
