@@ -11,6 +11,7 @@
 #include "criteria.h"
 #include "statistics.h"
 #include "auxiliary.h"
+#include "shapefile_utils.h"
 #include "read_parameters.h"
 
 #include <iostream>

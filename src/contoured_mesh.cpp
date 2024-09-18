@@ -142,7 +142,7 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
     update_regions_map(m, polys_in_subregion);
 
     // print field and isovalues info
-    print_field_csv(m, output_path + "/field.csv", prof);
+    print_field_csv(m, output_path + "/output_field.csv", prof);
     print_isovals_csv(m, Par.get_PERCENTILES(), isovals, output_path + "/isovalues.txt", prof);
 
     // save mesh
@@ -151,12 +151,24 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
     m.save((domain_dir + "/domain.vtk").c_str());
 
     // print verts and cells data (label and field) in a csv file
-    print_verts_csv(m, output_path + "/domain_verts_data.csv", prof);
-    print_cells_csv(m, subregion_region_map, output_path + "/domain_cells_data.csv", prof);
+    print_verts_csv(m, domain_dir + "/domain_verts_data.csv", prof);
+    print_cells_csv(m, subregion_region_map, domain_dir + "/domain_cells_data.csv", prof);
+
+    // print general statistics
+    Statistics stats;
+    stats.init(Par.get_PERCENTILES(), isovals, prof);
+    stats.compute_stats(m, polys_in_subregion);
+    stats.print_global_stats(m, Par.get_FILTER_THRESH(), output_path + "/global_stats.txt");
+    print_misclassifications(m, isovals, subregion_region_map, output_path + "/misclassifications.csv", prof);
+
+    // save a mesh for each iso-subregion
+    stats.init(Par.get_PERCENTILES(), isovals, prof);
+    print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
 
     // save a mesh for each iso-region
     restore_original_labels(m);
-    print_regions(m, subregion_region_map, Par.get_N_REGIONS(), output_path, prof);
+    print_regions(m, subregion_region_map, polys_in_region, stats, output_path + "/regions", prof);
+
     prof.pop();
 }
 
