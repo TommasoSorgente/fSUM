@@ -12,30 +12,33 @@ using namespace cinolib;
 class Statistics {
 
 private:
-  std::string base_path;
-  std::vector<double> perc_vals;
+  std::vector<double> percvals;
   std::vector<double> isovals;
-  std::unordered_map<int, std::vector<uint>> labels_polys_map;
+  std::unordered_map<int, std::vector<uint>> polys_in_region;
   Profiler Prof;
 
 public:
   Statistics() {}
   ~Statistics() {}
 
-  void init(std::string output_path, std::vector<double> perc, std::vector<double> vals,
-            std::unordered_map<int, std::vector<uint>> map, Profiler p) {
-      base_path = output_path;
-      perc_vals = perc;
+  void init(std::vector<double> perc, std::vector<double> vals, Profiler p) {
+      percvals = perc;
       isovals = vals;
-      labels_polys_map = map;
       Prof = p;
+      polys_in_region.clear();
+      clear_stats();
   }
 
-  template <class M, class V, class E, class P>
-  inline void compute_stats(AbstractMesh<M, E, V, P> &m);
+  void clear_stats();
 
-  template <class M, class V, class E, class P>
-  inline void print_stats(AbstractMesh<M, E, V, P> &m);
+  template<class M, class E, class V, class P> inline
+  void compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> map);
+
+  template<class M, class E, class V, class P> inline
+  void print_stats(AbstractMesh<M,E,V,P> &m, const std::string path);
+
+  template<class M, class E, class V, class P> inline
+  void print_global_stats(AbstractMesh<M,E,V,P> &m, const double param, const std::string path);
 
   // vectors for storing information about each region:
   std::vector<int> label_vec;    // label of the region
@@ -45,89 +48,160 @@ public:
   std::vector<double> mean_vec;  // mean field value in the region
   std::vector<double> stdev_vec; // standard deviation of the field
   std::vector<std::pair<double, double>> minmax_vec; // field extremities in the region
+  std::vector<std::pair<double, double>> perc_vec;   // percentiles of the region
   std::vector<std::pair<double, double>> iso_vec;    // isovalues of the region
+  std::vector<double> shape_coeff_vec;  // shape coefficient of the region (compactness + smoothness)
+  std::vector<double> misclass_vec; // sum of the values of the misclassified points in the region
+  std::vector<uint> n_misclass_vec; // number of misclassified points in the region
 };
 
 /**********************************************************************/
 
 #include "auxiliary.h"
 
-template <class M, class V, class E, class P>
-inline void Statistics::compute_stats(AbstractMesh<M, E, V, P> &m) {
-  Prof.push("Compute Statistics");
-  for (auto &l : labels_polys_map) {
-    int n = l.second.size();
-    uint cid = l.second.front();
-    //
-    label_vec.push_back(l.first);
-    card_vec.push_back(n);
-    pos_vec.push_back(m.poly_centroid(cid));
-    //
-    double mean = 0., sqmean = 0., stdev = 0., size = 0.;
-    double fmin = DBL_MAX, fmax = DBL_MIN;
-    for (uint pid : l.second) {
-      double val = m.poly_data(pid).quality;
-      mean += val;
-      sqmean += val * val;
-      size += m.poly_mass(pid);
-      fmin = std::min(fmin, val);
-      fmax = std::max(fmax, val);
-    }
-    mean /= n;
-    stdev = sqrt(sqmean / n - mean * mean);
-    //
-    mean_vec.push_back(mean);
-    stdev_vec.push_back(stdev);
-    size_vec.push_back(size);
-    minmax_vec.push_back(std::pair<double, double>(fmin, fmax));
+void Statistics::clear_stats() {
+    label_vec.clear();
+    card_vec.clear();
+    pos_vec.clear();
+    size_vec.clear();
+    mean_vec.clear();
+    stdev_vec.clear();
+    minmax_vec.clear();
+    perc_vec.clear();
+    iso_vec.clear();
+    shape_coeff_vec.clear();
+    misclass_vec.clear();
+    n_misclass_vec.clear();
+}
 
-    double val = m.poly_data(cid).quality;
-    for (uint lid = 0; lid < isovals.size() - 1; ++lid) {
-      if (isovals.at(lid) <= val && val <= isovals.at(lid + 1)) {
-        iso_vec.push_back(std::pair<double, double>(perc_vals.at(lid),
-                                                    perc_vals.at(lid + 1)));
-        break;
-      }
+/**********************************************************************/
+
+template<class M, class E, class V, class P> inline
+void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> map) {
+    Prof.push("Compute Statistics");
+
+    polys_in_region = map;
+    n_misclass_vec.push_back(0);
+    for (auto &l : polys_in_region) {
+        int n = l.second.size();
+        uint cid = l.second.front();
+        //
+        label_vec.push_back(l.first);
+        card_vec.push_back(n);
+        pos_vec.push_back(m.poly_centroid(cid));
+        //
+        double mean = 0., sqmean = 0., stdev = 0., size = 0.;
+        double fmin = DBL_MAX, fmax = DBL_MIN;
+        for (uint pid : l.second) {
+            double val = m.poly_data(pid).quality;
+            mean += val;
+            sqmean += val * val;
+            size += m.poly_mass(pid);
+            fmin = std::min(fmin, val);
+            fmax = std::max(fmax, val);
+        }
+        mean /= n;
+        stdev = sqrt(sqmean / n - mean * mean);
+        //
+        mean_vec.push_back(mean);
+        stdev_vec.push_back(stdev);
+        size_vec.push_back(size);
+        minmax_vec.push_back(std::pair<double, double>(fmin, fmax));
+
+        double val = mean; //m.poly_data(cid).quality;
+        for (uint lid = 0; lid < isovals.size() - 1; ++lid) {
+            if (isovals.at(lid) <= val && val <= isovals.at(lid + 1)) {
+                perc_vec.push_back(std::pair<double, double>(percvals.at(lid),
+                                                             percvals.at(lid + 1)));
+                iso_vec.push_back(std::pair<double, double>(isovals.at(lid),
+                                                            isovals.at(lid + 1)));
+                break;
+            }
+        }
+
+        if (m.mesh_is_surface()) {
+            Polygonmesh<> *m_tmp = reinterpret_cast<Polygonmesh<>*>(&m);
+            Polygonmesh<> sub_m;
+            export_cluster(*m_tmp, l.first, sub_m);
+            double c = mesh_shape_coefficient(sub_m);
+            shape_coeff_vec.push_back(c);
+        } else {
+            Polyhedralmesh<> *m_tmp = reinterpret_cast<Polyhedralmesh<>*>(&m);
+            Polyhedralmesh<> sub_m;
+            export_cluster(*m_tmp, l.first, sub_m);
+            double c = mesh_shape_coefficient(sub_m);
+            shape_coeff_vec.push_back(c);
+        }
+
+        double misclass = 0.;
+        for (uint pid : l.second) {
+            double f = m.poly_data(pid).quality;
+            double isovalue = iso_vec.back().second;
+            if (isovalue < f) {
+                misclass += f - isovalue;
+                ++n_misclass_vec.back();
+            }
+        }
+        // misclass /= iso_vec.back().second - iso_vec.back().first;
+        misclass_vec.push_back(misclass > 0. ? 1./misclass : 0.);
+        misclass_vec.push_back(misclass);
     }
+    Prof.pop();
+}
+
+/**********************************************************************/
+
+template<class M, class E, class V, class P> inline
+void Statistics::print_stats(AbstractMesh<M,E,V,P> &m, const std::string path) {
+  Prof.push("Print Statistics");
+
+  for (uint i = 0; i < polys_in_region.size(); ++i) {
+    std::string filename = path + "/region_" + std::to_string(label_vec[i]) + "_stats.csv";
+    std::ofstream fp(filename.c_str());
+    assert(fp.is_open());
+    //
+    fp << std::fixed;
+    fp.precision(0);
+    fp << "LABEL: " << label_vec[i] << std::endl;
+    fp << "PERCENTILES: " << perc_vec[i].first << " - " << perc_vec[i].second << std::endl;
+    fp.precision(4);
+    fp << "ISOVALUES: " << iso_vec[i].first << " - " << iso_vec[i].second << std::endl;
+    fp << "#CELLS: " << card_vec[i] << std::endl;
+    fp.precision(2);
+    fp << "POINT: " << pos_vec[i].x() << " " << pos_vec[i].y() << " " << pos_vec[i].z() << std::endl;
+    fp << "SIZE: " << size_vec[i] << std::endl;
+    fp << "MEAN: " << mean_vec[i] << std::endl;
+    fp << "STDEV: " << stdev_vec[i] << std::endl;
+    fp << "MIN: " << minmax_vec[i].first << std::endl;
+    fp << "MAX: " << minmax_vec[i].second << std::endl;
+    fp << "SHAPE: " << shape_coeff_vec[i] << std::endl;
+    fp.precision(6);
+    fp << "MISCLASSIFICATION: " << misclass_vec[i] << std::endl;
+    fp.precision(0);
+    fp << "N_MISCLASSIFIED: " << n_misclass_vec[i] << std::endl;
+    fp.close();
   }
   Prof.pop();
 }
 
 /**********************************************************************/
 
-template <class M, class V, class E, class P>
-inline void Statistics::print_stats(AbstractMesh<M, E, V, P> &m) {
-  Prof.push("Print Statistics");
-  std::string path = base_path + "/subregions_stats";
-  open_directory(path);
-  //
-  for (uint i = 0; i < labels_polys_map.size(); ++i) {
-    std::string filename = path + "/subregion_" + std::to_string(label_vec[i]) + ".csv";
-    std::ofstream fp;
-    fp.open(filename.c_str());
+template<class M, class E, class V, class P> inline
+void Statistics::print_global_stats(AbstractMesh<M,E,V,P> &m, const double param, const std::string path) {
+    std::ofstream fp(path.c_str());
     assert(fp.is_open());
-    //
-    fp << std::fixed;
-    fp.precision(0);
-    fp << "LABEL: " << label_vec[i] << std::endl;
-    fp << "ISO_REG: " << iso_vec[i].first << " - " << iso_vec[i].second << std::endl;
-    fp << "#CELLS: " << card_vec[i] << std::endl;
-    fp << "POINT: " << pos_vec[i].x() << " " << pos_vec[i].y() << " " << pos_vec[i].z() << std::endl;
-    fp.precision(2);
-    fp << "SIZE: " << size_vec[i] << std::endl;
-    fp << "MEAN: " << mean_vec[i] << std::endl;
-    fp << "STDEV: " << stdev_vec[i] << std::endl;
-    fp << "MIN: " << minmax_vec[i].first << std::endl;
-    fp << "MAX: " << minmax_vec[i].second << std::endl;
+    fp << "# parameter, quality, misclassification, n_misclassification" << std::endl;
 
-    // fp << "\nFIELD VALUES:\n";
-    // std::vector<uint> polys = labels_polys_map.at(label_vec[i]);
-    // for (uint pid : polys) {
-    //     fp << m.poly_data(pid).quality << std::endl;
-    // }
+    double q = std::accumulate(shape_coeff_vec.begin(), shape_coeff_vec.end(), 0.);
+    q /= shape_coeff_vec.size();
+
+    double c = std::accumulate(misclass_vec.begin(), misclass_vec.end(), 0.);
+
+    double n = std::accumulate(n_misclass_vec.begin(), n_misclass_vec.end(), 0.);
+    n /= m.num_polys();
+
+    fp << param << ", " << q << ", " << c << ", " << n << std::endl;
     fp.close();
-  }
-  Prof.pop();
 }
 
 #endif // STATISTICS_H

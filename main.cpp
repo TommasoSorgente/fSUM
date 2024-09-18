@@ -29,9 +29,10 @@ int main(int argc, char *argv[]) {
         DrawablePolygonmesh<> m;
         FESA.init(m, Par);
         FESA.segment(m, Par);
-        FESA.filter(m, Par);
-        FESA.smooth(m, Par);
-        FESA.analyze(m, Par);
+        if (Par.get_FILTER())
+            FESA.filter(m, Par);
+        if (Par.get_SMOOTHEN())
+            FESA.smooth(m, Par);
         FESA.output(m, Par);
         if (!Par.get_GUI()) break;
 
@@ -72,9 +73,10 @@ int main(int argc, char *argv[]) {
         DrawablePolyhedralmesh<> m;
         FESA.init(m, Par);
         FESA.segment(m, Par);
-        FESA.filter(m, Par);
-        FESA.smooth(m, Par);
-        FESA.analyze(m, Par);
+        if (Par.get_FILTER())
+            FESA.filter(m, Par);
+        if (Par.get_SMOOTHEN())
+            FESA.smooth(m, Par);
         FESA.output(m, Par);
         if (!Par.get_GUI()) break;
 

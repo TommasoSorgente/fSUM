@@ -8,8 +8,8 @@
 using namespace cinolib;
 
 /* is the variance of the field among the cells in *polys* smaller than threshold? */
-template<class M, class V, class E, class P>
-double CRIT_variance(const AbstractMesh<M,V,E,P> &m,
+template<class M, class E, class V, class P> inline
+double CRIT_variance(const AbstractMesh<M,E,V,P> &m,
                      const std::vector<uint> &polys, const double THRESH)
 {
     double sum = 0.;
@@ -32,8 +32,8 @@ double CRIT_variance(const AbstractMesh<M,V,E,P> &m,
 /**********************************************************************/
 
 /* is the mass (area or volume) covered by the cells in *polys* smaller than threshold? */
-template<class M, class V, class E, class P>
-bool CRIT_mass(const AbstractMesh<M,V,E,P> &m, const std::vector<uint> &polys, const double THRESH)
+template<class M, class E, class V, class P> inline
+bool CRIT_mass(const AbstractMesh<M,E,V,P> &m, const std::vector<uint> &polys, const double THRESH)
 {
     double mass = 0.;
     for (uint pid : polys) {

@@ -26,9 +26,11 @@ protected:
     int    dim;             // dimension of the problem
     bool   smooth_field;    // smooth the field values by averaging
     int    n_regions;       // number of regions to be computed in the domain
-    vector<double> isovals; // isovalues
+    vector<double> percentiles; // isovalues
     bool   cut_mesh;        // cut mesh along isovalues
     bool   log_mode;        // use the logarithm of the field values (for non-normalized data)
+    bool   filter;          // apply filtering of small regions
+    bool   smoothen;        // apply smoothing of the boundaries
     int    n_iter;          // max number of iterations
     double filter_thresh;   // min area of the regions (percentual)
     int    ref_type;        // 1 for edge split, 2 for cell split
@@ -49,9 +51,11 @@ protected:
         dim           = 2;
         smooth_field  = false;
         n_regions     = 1;
-        isovals       = {};
+        percentiles   = {};
         cut_mesh      = false;
         log_mode      = false;
+        filter        = false;
+        smoothen      = false;
         n_iter        = 0;
         filter_thresh = 1.;
         ref_type      = 2;
@@ -80,15 +84,17 @@ protected:
     void read_dim(ifstream & inpf)          { inpf >> dim; }
     void read_smooth_field(ifstream & inpf) { inpf >> smooth_field; }
     void read_n_regions(ifstream & inpf)    { inpf >> n_regions; }
-    void read_isovals(ifstream & inpf)      { isovals.clear();
+    void read_percentiles(ifstream & inpf)  { percentiles.clear();
                                               while ( inpf.get()!='\n' && inpf.good() ) {
                                                 double f;
                                                 inpf >> f;
-                                                isovals.push_back(f);
+                                                percentiles.push_back(f);
                                               }
-                                              assert((int)isovals.size()==n_regions+1 && "Error: wrong number of isovals"); }
+                                              assert((int)percentiles.size()==n_regions+1 && "Error: wrong number of percentiles"); }
     void read_cut_mesh(ifstream & inpf)     { inpf >> cut_mesh; }
     void read_log_mode(ifstream & inpf)     { inpf >> log_mode; }
+    void read_filter(ifstream & inpf)       { inpf >> filter; }
+    void read_smoothen(ifstream & inpf)     { inpf >> smoothen; }
     void read_n_iter(ifstream & inpf)       { inpf >> n_iter; }
     void read_filter_thresh(ifstream & inpf){ inpf >> filter_thresh; }
     void read_ref_type(ifstream & inpf)     { inpf >> ref_type; }
@@ -110,9 +116,11 @@ protected:
       else if ( keywd == "dim" )            { read_dim(inpf); }
       else if ( keywd == "smooth_field" )   { read_smooth_field(inpf); }
       else if ( keywd == "n_regions" )      { read_n_regions(inpf); }
-      else if ( keywd == "isovals" )        { read_isovals(inpf); }
+      else if ( keywd == "percentiles" )    { read_percentiles(inpf); }
       else if ( keywd == "cut_mesh" )       { read_cut_mesh(inpf); }
       else if ( keywd == "log_mode" )       { read_log_mode(inpf); }
+      else if ( keywd == "filter" )         { read_filter(inpf); }
+      else if ( keywd == "smoothen" )       { read_smoothen(inpf); }
       else if ( keywd == "n_iter" )         { read_n_iter(inpf); }
       else if ( keywd == "filter_thresh" )  { read_filter_thresh(inpf); }
       else if ( keywd == "ref_type" )       { read_ref_type(inpf); }
@@ -140,9 +148,11 @@ public:
     void set_DIM            (const int value)     { dim = value; }
     void set_SMOOTH_FIELD   (const bool value)    { smooth_field = value; }
     void set_N_REGIONS      (const int value)     { n_regions = value; }
-    void set_ISOVALS (const vector<double> value) { isovals = value; }
+    void set_PERCENTILES    (const vector<double> value) { percentiles = value; }
     void set_CUT_MESH       (const bool value)    { cut_mesh = value; }
     void set_LOG_MODE       (const bool value)    { log_mode = value; }
+    void set_FILTER         (const bool value)    { filter = value; }
+    void set_SMOOTHEN       (const bool value)    { smoothen = value; }
     void set_N_ITER         (const int value)     { n_iter = value; }
     void set_FILTER_THRESH  (const double value)  { filter_thresh = value; }
     void set_REF_TYPE       (const int value)     { ref_type = value; }
@@ -162,9 +172,11 @@ public:
     int    get_DIM ()             { return dim; }
     bool   get_SMOOTH_FIELD ()    { return smooth_field; }
     int    get_N_REGIONS ()       { return n_regions; }
-    vector<double> get_ISOVALS () { return isovals; }
+    vector<double> get_PERCENTILES () { return percentiles; }
     bool   get_CUT_MESH ()        { return cut_mesh; }
     bool   get_LOG_MODE ()        { return log_mode; }
+    bool   get_FILTER ()          { return filter; }
+    bool   get_SMOOTHEN ()        { return smoothen; }
     int    get_N_ITER ()          { return n_iter; }
     double get_FILTER_THRESH ()   { return filter_thresh; }
     int    get_REF_TYPE ()        { return ref_type; }
@@ -186,10 +198,12 @@ public:
       cout << "dim: "               << dim << endl;
       cout << "smooth_field: "      << smooth_field << endl;
       cout << "n_regions: "         << n_regions << endl;
-      for (uint i=0; i<isovals.size(); ++i)
-          cout << "isovals(" << i << ": " << isovals.at(i) << endl;
+      for (uint i=0; i<percentiles.size(); ++i)
+          cout << "percentiles(" << i << ": " << percentiles.at(i) << endl;
       cout << "cut_mesh: "          << cut_mesh << endl;
       cout << "log_mode: "          << log_mode << endl;
+      cout << "filter: "            << filter << endl;
+      cout << "smoothen: "          << smoothen << endl;
       cout << "n_iter: "            << n_iter << endl;
       cout << "filter_thresh: "     << filter_thresh << endl;
       cout << "ref_type: "          << ref_type << endl;

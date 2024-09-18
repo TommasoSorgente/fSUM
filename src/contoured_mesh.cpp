@@ -4,7 +4,7 @@
 /*************************** PUBLIC METHODS ***************************/
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::init(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 {
     prof.push("FESA::init");
@@ -33,33 +33,34 @@ void ContouredMesh::init(AbstractMesh<M,E,V,P> &m, Parameters &Par)
     std::string name = name_tmp.substr(first+1);
     output_path = std::string(HOME_PATH) + Par.get_OUT_PATH() + name;
     open_directory(output_path);
+    print_field_csv(m, output_path + "/input_field.csv", prof);
     prof.pop();
 }
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::segment(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 {
     prof.push("FESA::segment");
-    compute_iso(Par.get_N_REGIONS(), Par.get_ISOVALS());
+    compute_iso(Par.get_N_REGIONS(), Par.get_PERCENTILES());
     if (Par.get_CUT_MESH() && (m.mesh_type() == TRIMESH || m.mesh_type() == TETMESH)) {
         // cut_mesh(m); // needs the Tri/Tetmesh class instead of Polygon/Polyhedralmesh
     }
 
     insert_iso2(m);
 
-    separate_ccs(m);
+    separate_ccs(m); // from now on, we switch from regions to subregions!
 
     prof.pop();
 }
 
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::filter(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 {
     prof.push("FESA::filter");
     int i = 0, n_labels_tmp = 0;
-    int n_labels_init = labels_polys_map.size();
+    int n_labels_init = polys_in_subregion.size();
 
     // compute mesh total mass (area or volume)
     double mass = 0;
@@ -68,8 +69,8 @@ void ContouredMesh::filter(AbstractMesh<M,E,V,P> &m, Parameters &Par)
     }
     double FILTER_THRESH = mass * Par.get_FILTER_THRESH() / 100.;
 
-    while (n_labels_tmp != (int)labels_polys_map.size() && i < Par.get_N_ITER()) {
-        n_labels_tmp = labels_polys_map.size();
+    while (n_labels_tmp != (int)polys_in_subregion.size() && i < Par.get_N_ITER()) {
+        n_labels_tmp = polys_in_subregion.size();
         remove_small_labels(m, FILTER_THRESH);
         ++i;
     }
@@ -77,12 +78,12 @@ void ContouredMesh::filter(AbstractMesh<M,E,V,P> &m, Parameters &Par)
     if (n_labels_tmp == n_labels_init) {
         cout << "FESA Warning: did not remove any label. Filter_thresh is too high?";
     }
-    prof.pop(true, "\tfound " + std::to_string(labels_polys_map.size()) + " components");
+    prof.pop(true, "\tfound " + std::to_string(polys_in_subregion.size()) + " components");
 }
 
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::smooth(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 {
     prof.push("FESA::smooth");
@@ -96,51 +97,53 @@ void ContouredMesh::smooth(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
-void ContouredMesh::analyze(AbstractMesh<M,E,V,P> &m, Parameters &Par)
-{
-    prof.push("FESA::analyze");
-    stats.init(output_path, Par.get_ISOVALS(), isovals, labels_polys_map, prof);
-    stats.compute_stats(m);
-    stats.print_stats(m);
-    prof.pop();
-}
-
-/**********************************************************************/
-
 void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
 {
     prof.push("FESA::output");
-    update_labels_polys_map(m, labels_polys_map);
+    update_regions_map(m, polys_in_subregion);
 
-    // print isovalues info
-    print_isovals_csv(m, Par.get_ISOVALS(), isovals, output_path + "/isovalues.txt", prof);
+    // print field and isovalues info
+    print_field_csv(m, output_path + "/output_field.csv", prof);
+    print_isovals_csv(m, Par.get_PERCENTILES(), isovals, output_path + "/isovalues.txt", prof);
 
     // save mesh
     std::string domain_dir = output_path + "/domain";
     open_directory(domain_dir);
-    m.save((domain_dir + "/domain.off").c_str());
+    m.save((domain_dir + "/domain.obj").c_str());
 
     // print verts and cells data (label and field) in a csv file
     print_verts_csv(m, domain_dir + "/domain_verts_data.csv", prof);
-    print_cells_csv(m, tmp_labels_map, domain_dir + "/domain_cells_data.csv", prof);
+    print_cells_csv(m, subregion_region_map, domain_dir + "/domain_cells_data.csv", prof);
+
+    // print general statistics
+    Statistics stats;
+    stats.init(Par.get_PERCENTILES(), isovals, prof);
+    stats.compute_stats(m, polys_in_subregion);
+    stats.print_global_stats(m, Par.get_FILTER_THRESH(), output_path + "/global_stats.txt");
+    print_misclassifications(m, isovals, subregion_region_map, output_path + "/misclassifications.csv", prof);
 
     // generate a shapefile containing the iso-regions boundaries
-    print_regions_shp(m, stats, labels_polys_map, domain_dir + "/domain", prof);
+    print_regions_shp(m, stats, polys_in_subregion, domain_dir + "/domain", prof);
+
+    // save a mesh for each iso-subregion
+    stats.init(Par.get_PERCENTILES(), isovals, prof);
+    print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
 
     // save a mesh for each iso-region
     restore_original_labels(m);
-    print_regions_off(m, tmp_labels_map, Par.get_N_REGIONS(), output_path, prof);
+    print_regions(m, subregion_region_map, polys_in_region, stats, output_path + "/regions", prof);
+
     prof.pop();
 }
 
 void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 {
     prof.push("FESA::output");
-    update_labels_polys_map(m, labels_polys_map);
+    update_regions_map(m, polys_in_subregion);
 
-    // print isovalues info
-    print_isovals_csv(m, Par.get_ISOVALS(), isovals, output_path + "/isovalues.txt", prof);
+    // print field and isovalues info
+    print_field_csv(m, output_path + "/field.csv", prof);
+    print_isovals_csv(m, Par.get_PERCENTILES(), isovals, output_path + "/isovalues.txt", prof);
 
     // save mesh
     std::string domain_dir = output_path + "/domain";
@@ -149,11 +152,11 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 
     // print verts and cells data (label and field) in a csv file
     print_verts_csv(m, output_path + "/domain_verts_data.csv", prof);
-    print_cells_csv(m, tmp_labels_map, output_path + "/domain_cells_data.csv", prof);
+    print_cells_csv(m, subregion_region_map, output_path + "/domain_cells_data.csv", prof);
 
     // save a mesh for each iso-region
     restore_original_labels(m);
-    print_regions_off(m, tmp_labels_map, Par.get_N_REGIONS(), output_path, prof);
+    print_regions(m, subregion_region_map, Par.get_N_REGIONS(), output_path, prof);
     prof.pop();
 }
 
@@ -161,7 +164,7 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 /*************************** PRIVATE METHODS **************************/
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, std::map<uint,double> &field)
 {
     prof.push("Input field:  " + field_path);
@@ -196,7 +199,7 @@ void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field
     prof.pop();
 }
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::load_second_field(AbstractMesh<M,E,V,P> &m, const std::string field_path)
 {
     prof.push("Input second_field: \t" + field_path);
@@ -214,12 +217,12 @@ void ContouredMesh::load_second_field(AbstractMesh<M,E,V,P> &m, const std::strin
 
     // store the field value in each poly
     std::vector<double> poly_heights(m.num_polys());
-    PARALLEL_FOR(0, poly_heights.size(), 1000, [this, &poly_heights](int pid) {
+    for (uint pid=0; pid<m.num_polys(); ++pid) {
         poly_heights.at(pid) = second_field.at(pid);
-    });
+    }
 
     // set vert.y to a weighted average of the neighboring poly values
-    PARALLEL_FOR(0, m.num_verts(), 1000, [poly_heights, &m](int vid) {
+    for (uint vid=0; vid<m.num_verts(); ++vid) {
         double value = 0., mass  = 0.;
         for (uint pid : m.adj_v2p(vid)) {
             double coeff = m.poly_mass(pid) / m.verts_per_poly(pid);
@@ -228,7 +231,7 @@ void ContouredMesh::load_second_field(AbstractMesh<M,E,V,P> &m, const std::strin
         }
         value /= mass;
         m.vert(vid).y() = value; //exp(value);
-    });
+    }
     prof.pop();
 }
 
@@ -253,17 +256,17 @@ void ContouredMesh::load_global_field(const std::string field_path)
     prof.pop();
 }
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::color_mesh(AbstractMesh<M,E,V,P> &m) {
-    PARALLEL_FOR(0, m.num_polys(), 1000, [this, &m](int pid) {
+    for (uint pid=0; pid<m.num_polys(); ++pid) {
         double c = (field.at(pid) - field_min) / (field_max - field_min);
         m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
-    });
+    }
 
-    PARALLEL_FOR(0, m.num_verts(), 1000, [this, &m](int vid) {
+    for (uint vid=0; vid<m.num_verts(); ++vid) {
         double c = (m.vert_data(vid).uvw.u() - field_min) / (field_max - field_min);
         m.vert_data(vid).color = Color::red_white_blue_ramp_01(1. - c);
-    });
+    }
 }
 
 /**********************************************************************/
@@ -331,7 +334,7 @@ void ContouredMesh::cut_mesh(Tetmesh<> &m)
 
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::insert_iso1(AbstractMesh<M,E,V,P> &m)
 {
     // set poly_data.quality from the vertices values
@@ -356,10 +359,10 @@ void ContouredMesh::insert_iso1(AbstractMesh<M,E,V,P> &m)
             }
         }
     }
-    update_labels_polys_map(m, labels_polys_map);
+    update_regions_map(m, polys_in_region);
 }
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::insert_iso2(AbstractMesh<M,E,V,P> &m)
 {
     // set poly_data.quality from the poly 1-ring
@@ -384,10 +387,10 @@ void ContouredMesh::insert_iso2(AbstractMesh<M,E,V,P> &m)
         }
         assert(found);
     }
-    update_labels_polys_map(m, labels_polys_map);
+    update_regions_map(m, polys_in_region);
 }
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::insert_iso3(AbstractMesh<M,E,V,P> &m)
 {
     // set vert_data.quality from the vert 1-ring
@@ -416,23 +419,24 @@ void ContouredMesh::insert_iso3(AbstractMesh<M,E,V,P> &m)
             assert(found);
         }
         auto result = max_element(vert_labels.begin(), vert_labels.end());
-        m.poly_data(pid).label = distance(vert_labels.begin(), result);
+        uint lid = distance(vert_labels.begin(), result);
+        m.poly_data(pid).label = lid;
     }
-    update_labels_polys_map(m, labels_polys_map);
+    update_regions_map(m, polys_in_region);
 }
 
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::separate_ccs(AbstractMesh<M,E,V,P> &m)
 {
     prof.push("Separate conn. comp.");
-    tmp_labels_map.clear();
-    int tmp_label = std::max_element(labels_polys_map.begin(), labels_polys_map.end(),
+    subregion_region_map.clear();
+    int tmp_label = std::max_element(polys_in_region.begin(), polys_in_region.end(),
                     [](const auto& l, const auto& r) { return l.first < r.first; })->first + 1;
     std::vector<bool> visited(m.num_polys(), false);
 
-    for (auto &l : labels_polys_map) {
+    for (auto &l : polys_in_region) {
         // mask all the polys with a label different from *l.first* (if mask[p] = true, bfs cannot pass through it)
         std::vector<bool> mask(m.num_polys(), true);
         for (uint pid : l.second) {
@@ -453,25 +457,25 @@ void ContouredMesh::separate_ccs(AbstractMesh<M,E,V,P> &m)
             }
 
             // update the map between tmp labels and old labels
-            auto it = tmp_labels_map.find(l.first);
-            int old_label = (it == tmp_labels_map.end()) ? l.first : it->second;
-            tmp_labels_map[tmp_label] = old_label;
+            auto it = subregion_region_map.find(l.first);
+            int old_label = (it == subregion_region_map.end()) ? l.first : it->second;
+            subregion_region_map[tmp_label] = old_label;
             ++tmp_label;
         }
     }
-    update_labels_polys_map(m, labels_polys_map);
-    prof.pop(true, "\tfound " + std::to_string(labels_polys_map.size()) + " components");
+    update_regions_map(m, polys_in_subregion);
+    prof.pop(true, "\tfound " + std::to_string(polys_in_subregion.size()) + " components");
 }
 
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::remove_small_labels(AbstractMesh<M,E,V,P> &m, const double FILTER_THRESH)
 {
     if (verbose) prof.push("   Remove small conn. comp.");
     // find the labels with area smaller than threshold
     std::unordered_set<int> labels_to_remove;
-    for (auto &l : labels_polys_map) {
+    for (auto &l : polys_in_subregion) {
         bool CRITERION_1 = CRIT_mass(m, l.second, FILTER_THRESH);
         if (CRITERION_1) {
             labels_to_remove.insert(l.first);
@@ -484,7 +488,7 @@ void ContouredMesh::remove_small_labels(AbstractMesh<M,E,V,P> &m, const double F
     for (int l : labels_to_remove) {
         // count the occurrences of each label (except *l*) around elements with label *l*
         std::unordered_map<int, int> label_counter;
-        for (uint pid : labels_polys_map[l]) {
+        for (uint pid : polys_in_subregion[l]) {
             for (uint nbr : m.adj_p2p(pid)) {
                 int neigh_l = m.poly_data(nbr).label;
                 if (DOES_NOT_CONTAIN(labels_to_remove, neigh_l)) {
@@ -501,7 +505,7 @@ void ContouredMesh::remove_small_labels(AbstractMesh<M,E,V,P> &m, const double F
             label_counter_ordered[l.second].push_back(l.first);
         }
         // assert((--label_counter_ordered.end())->second.size() == 1);  // more than one candidate
-        for (uint pid : labels_polys_map[l]) {
+        for (uint pid : polys_in_subregion[l]) {
             new_polys_label[pid] = (--label_counter_ordered.end())->second.front();
         }
         ++count;
@@ -511,20 +515,20 @@ void ContouredMesh::remove_small_labels(AbstractMesh<M,E,V,P> &m, const double F
     for (auto &l : new_polys_label) {
         m.poly_data(l.first).label = l.second;
     }
-    update_labels_polys_map(m, labels_polys_map);
+    update_regions_map(m, polys_in_subregion);
     if (verbose) prof.pop(true, "\tremoved " + std::to_string(count) + " components");
 }
 
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 uint ContouredMesh::smooth_boundaries(AbstractMesh<M,E,V,P> &m)
 {
     if (verbose) prof.push("   Smoothing of the boundaries");
 
     uint count = 0;
     vector<bool> visited(m.num_polys(), false);
-    for (auto &l : labels_polys_map) {
+    for (auto &l : polys_in_subregion) {
         for (uint pid : l.second) {
             if (visited.at(pid)) continue;
 
@@ -560,7 +564,7 @@ uint ContouredMesh::smooth_boundaries(AbstractMesh<M,E,V,P> &m)
             visited.at(pid) = true;
         }
     }
-    update_labels_polys_map(m, labels_polys_map);
+    update_regions_map(m, polys_in_subregion);
 
     if (verbose) prof.pop(true, "\tswitched " + std::to_string(count) + " labels");
     return count;
@@ -568,17 +572,17 @@ uint ContouredMesh::smooth_boundaries(AbstractMesh<M,E,V,P> &m)
 
 /**********************************************************************/
 
-template<class M, class V, class E, class P> inline
+template<class M, class E, class V, class P> inline
 void ContouredMesh::restore_original_labels(AbstractMesh<M,E,V,P> &m)
 {
     prof.push("Reassign original labels: ");
-    PARALLEL_FOR(0, m.num_polys(), 1000, [this, &m](int pid) {
+    for (uint pid=0; pid<m.num_polys(); ++pid) {
         int tmp_label = m.poly_data(pid).label;
-        auto it = tmp_labels_map.find(tmp_label);
-        // find the label corresponding to *tmp_label* in *tmp_labels_map*
+        auto it = subregion_region_map.find(tmp_label);
+        // find the label corresponding to *tmp_label* in *subregion_region_map*
         // if *tmp_label* is not in the map, then it is one of the old labels and we maintain it
-        int old_label = (it == tmp_labels_map.end()) ? tmp_label : it->second;
+        int old_label = (it == subregion_region_map.end()) ? tmp_label : it->second;
         m.poly_data(pid).label = old_label;
-    });
+    }
     prof.pop(true, "\tfound " + std::to_string(m.polys_n_unique_labels()) + " labels");
 }

@@ -1,13 +1,14 @@
 ## PARAMETERS FILE
-mesh_path     data/Liguria_grid/cr_FSASSELLO/mesh_grid.obj
-field1_path   data/Liguria_grid/cr_FSASSELLO/cr_mean.csv
-fieldG_path   data/Liguria_grid/cr_mean_global.csv
+mesh_path     data/Liguria_grid/11_FSASSELLO/mesh_grid.obj
+field1_path   data/Liguria_grid/11_FSASSELLO/cr_mean.csv
 dim           2
 ##
 n_regions     5
-isovals       0 25 50 75 95 100
+percentiles   0 25 50 75 95 100
 cut_mesh      0
 ##
+filter        1
+smoothen      1
 n_iter        50
 filter_thresh 0.5
 ##
@@ -27,11 +28,13 @@ verbose       0
 ## dim:          dimension of the problem
 ##
 ## COMPUTE ISO-REGIONS
-## n_regions: number of regions to be computed in the domain
-## isovals:   isovalues (absolue or percentiles)
-## cut_mesh:  cut the mesh along isocontours/isosurfaces (ONLY for tri/tet meshes)
+## n_regions:   number of regions to be computed in the domain
+## percentiles: isovalues (absolute or percentiles)
+## cut_mesh:    cut the mesh along isocontours/isosurfaces (ONLY for tri/tet meshes)
 ##
 ## FILTER SMALL REGIONS
+## filter:        apply filtering of small regions
+## smoothen:      apply smoothing of the boundaries
 ## n_iter:        max number of iterations
 ## filter_thresh: percentual min area of the regions (in [0,100])
 ##

@@ -7,7 +7,6 @@
 #include <cinolib/drawable_isocontour.h>
 #include <cinolib/drawable_isosurface.h>
 #include <cinolib/profiler.h>
-#include <cinolib/parallel_for.h>
 
 #include "criteria.h"
 #include "statistics.h"
@@ -28,20 +27,17 @@ public:
 
     std::vector<double> isovals;
 
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void init(AbstractMesh<M,E,V,P> &m, Parameters &Par);
 
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void segment(AbstractMesh<M,E,V,P> &m, Parameters &Par);
 
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void filter(AbstractMesh<M,E,V,P> &m, Parameters &Par);
 
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void smooth(AbstractMesh<M,E,V,P> &m, Parameters &Par);
-
-    template<class M, class V, class E, class P> inline
-    void analyze(AbstractMesh<M,E,V,P> &m, Parameters &Par);
 
     void output(Polygonmesh<> &m,    Parameters &Par);
     void output(Polyhedralmesh<> &m, Parameters &Par);
@@ -51,22 +47,22 @@ private:
     double field_min, field_max;
     std::map<uint,double> field, second_field;
     std::vector<double> global_field;
-    std::unordered_map<int, std::vector<uint>> labels_polys_map; // <label, polys with that label>
-    std::unordered_map<int, int> tmp_labels_map; // <region label, subregion label>
+    std::unordered_map<int, std::vector<uint>> polys_in_region;
+    std::unordered_map<int, std::vector<uint>> polys_in_subregion;
+    std::unordered_map<int, int> subregion_region_map;
     Profiler prof;
     bool verbose;
     std::string output_path;
-    Statistics stats;
 
     /* load the scalar field and assign a field value to cells and vertices */
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, std::map<uint,double> &field);
     void load_global_field(const std::string field_path);
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void load_second_field(AbstractMesh<M,E,V,P> &m, const std::string field_path);
 
     /* color the mesh elements and vertices wrt the field */
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void color_mesh(AbstractMesh<M,E,V,P> &m);
 
     /* compute *n_regions+1* isovalues between min_val and max_val */
@@ -77,27 +73,27 @@ private:
     void cut_mesh(Tetmesh<> &m);
 
     /* label the elements inside the isoregions in the mesh */
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void insert_iso1(AbstractMesh<M,E,V,P> &m);
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void insert_iso2(AbstractMesh<M,E,V,P> &m);
-    template<class M, class V, class E, class P> inline
+    template<class M, class E, class V, class P> inline
     void insert_iso3(AbstractMesh<M,E,V,P> &m);
 
     /* separate connected components of each label */
-    template<class M, class V, class E, class P>
+    template<class M, class E, class V, class P> inline
     void separate_ccs(AbstractMesh<M,E,V,P> &m);
 
     /* removes regions smaller than *FILTER_THRESH* */
-    template<class M, class V, class E, class P>
+    template<class M, class E, class V, class P> inline
     void remove_small_labels(AbstractMesh<M,E,V,P> &m, const double FILTER_THRESH);
 
     /* smoothing of the boundaries */
-    template<class M, class V, class E, class P>
+    template<class M, class E, class V, class P> inline
     uint smooth_boundaries(AbstractMesh<M,E,V,P> &m);
 
     /* reassign the original *n_regions* labels to the cells */
-    template<class M, class V, class E, class P>
+    template<class M, class E, class V, class P> inline
     void restore_original_labels(AbstractMesh<M,E,V,P> &m);
 };
 
