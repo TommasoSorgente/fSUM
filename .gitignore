@@ -32,6 +32,8 @@
 
 # Directories
 build/
+*/build-Linux/
+*/build-Darwin/
 out/
 
 # Files
