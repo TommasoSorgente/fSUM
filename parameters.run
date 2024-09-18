@@ -7,8 +7,8 @@ n_regions     5
 percentiles   0 25 50 75 95 100
 cut_mesh      0
 ##
-filter        0
-smoothen      0
+filter        1
+smoothen      1
 n_iter        50
 filter_thresh 0.5
 ##

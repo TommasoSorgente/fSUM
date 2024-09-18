@@ -137,7 +137,7 @@ void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int,
         for (uint pid : l.second) {
             double f = m.poly_data(pid).quality;
             double isovalue = iso_vec.back().second;
-            if (isovalue < f) {
+            if (f > isovalue) { // TO FIX
                 misclass += f - isovalue;
                 ++n_misclass_vec.back();
             }
