@@ -38,7 +38,7 @@ public:
     void filter(AbstractMesh<M,E,V,P> &m, Parameters &Par);
 
     template<class M, class E, class V, class P> inline
-    void smooth(AbstractMesh<M,E,V,P> &m, Parameters &Par);
+    void smooth_boundaries(AbstractMesh<M,E,V,P> &m, Parameters &Par);
 
     void output(Polygonmesh<> &m,    Parameters &Par);
     void output(Polyhedralmesh<> &m, Parameters &Par);
@@ -57,7 +57,8 @@ private:
 
     /* load the scalar field and assign a field value to cells and vertices */
     template<class M, class E, class V, class P> inline
-    void load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, std::map<uint,double> &field);
+    void load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path,
+                           std::map<uint,double> &field, bool SMOOTH_FIELD);
     void load_global_field(const std::string field_path);
     template<class M, class E, class V, class P> inline
     void load_second_field(AbstractMesh<M,E,V,P> &m, const std::string field_path);

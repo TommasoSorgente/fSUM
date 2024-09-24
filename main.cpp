@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
         if (Par.get_FILTER())
             FESA.filter(m, Par);
         if (Par.get_SMOOTHEN())
-            FESA.smooth(m, Par);
+            FESA.smooth_boundaries(m, Par);
         FESA.output(m, Par);
         if (!Par.get_GUI()) break;
 
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
             float c = (float)m.poly_data(pid).label / n_labels;
             m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
         }
-        // m.poly_color_wrt_label(true);
+        m.poly_color_wrt_label(false);
         m.show_poly_color();
         // m.show_vert_color();
         m.updateGL();
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
             std::vector<double> isovalues = FESA.isovals;
             for (uint i=0; i<isovalues.size(); ++i) {
                 DrawableIsocontour<> *contour = new DrawableIsocontour<>(m, isovalues.at(i));
-                contour->thickness = 700;
+                contour->thickness = 30000; // 700;
                 contour->color = Color::BLACK(); //parula_ramp(isovalues.size(), i);
                 gui.push(contour);
             }
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
         if (Par.get_FILTER())
             FESA.filter(m, Par);
         if (Par.get_SMOOTHEN())
-            FESA.smooth(m, Par);
+            FESA.smooth_boundaries(m, Par);
         FESA.output(m, Par);
         if (!Par.get_GUI()) break;
 

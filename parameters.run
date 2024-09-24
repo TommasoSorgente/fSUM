@@ -1,6 +1,7 @@
 ## PARAMETERS FILE
 mesh_path     data/Liguria_grid/11_FSASSELLO/mesh_grid.obj
 field1_path   data/Liguria_grid/11_FSASSELLO/cr_mean.csv
+smooth_field  1
 dim           2
 ##
 n_regions     5
@@ -10,9 +11,9 @@ cut_mesh      0
 filter        1
 smoothen      1
 n_iter        50
-filter_thresh 0.5
+filter_thresh 2
 ##
-gui           0
+gui           1
 show_iso      0
 out_path      out/
 out_format    -
@@ -25,6 +26,7 @@ verbose       0
 ## field1_path:  path of the input field #1
 ## field2_path:  path of the input field #2 (optional)
 ## fieldG_path:  path of the input global field (optional)
+## smooth_field: smooth the field values by averaging
 ## dim:          dimension of the problem
 ##
 ## COMPUTE ISO-REGIONS

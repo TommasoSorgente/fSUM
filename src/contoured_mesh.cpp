@@ -13,13 +13,16 @@ void ContouredMesh::init(AbstractMesh<M,E,V,P> &m, Parameters &Par)
     // load mesh and scalar fields
     m.load(Par.get_MESH_PATH().c_str());
 
-    load_field(m, Par.get_FIELD1_PATH(), field);
+    load_field(m, Par.get_FIELD1_PATH(), field, Par.get_SMOOTH_FIELD());
     if (Par.get_FIELDG_PATH() != "") {
         load_global_field(Par.get_FIELDG_PATH());
     } else {
         for (uint i=0; i<field.size(); ++i) {
             global_field.push_back(field[i]);
         }
+        auto minmax = minmax_element(global_field.begin(), global_field.end());
+        field_min = *minmax.first;
+        field_max = *minmax.second;
     }
     if (Par.get_GUI()) {
         color_mesh(m);
@@ -36,6 +39,8 @@ void ContouredMesh::init(AbstractMesh<M,E,V,P> &m, Parameters &Par)
     print_field_csv(m, output_path + "/input_field.csv", prof);
     prof.pop();
 }
+
+/**********************************************************************/
 
 template<class M, class E, class V, class P> inline
 void ContouredMesh::segment(AbstractMesh<M,E,V,P> &m, Parameters &Par)
@@ -84,9 +89,9 @@ void ContouredMesh::filter(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 /**********************************************************************/
 
 template<class M, class E, class V, class P> inline
-void ContouredMesh::smooth(AbstractMesh<M,E,V,P> &m, Parameters &Par)
+void ContouredMesh::smooth_boundaries(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 {
-    prof.push("FESA::smooth");
+    prof.push("FESA::smooth boundaries");
     int j = 0, count = 1;
     while (count > 0 && j < Par.get_N_ITER()) {
         count = smooth_boundaries(m);
@@ -177,7 +182,7 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 /**********************************************************************/
 
 template<class M, class E, class V, class P> inline
-void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, std::map<uint,double> &field)
+void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, std::map<uint,double> &field, bool SMOOTH_FIELD)
 {
     prof.push("Input field:  " + field_path);
     // load the field from file
@@ -194,10 +199,10 @@ void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field
 
     // set poly_data.quality from the field values
     for (uint pid=0; pid<m.num_polys(); ++pid) {
-        m.poly_data(pid).quality = field.at(pid);
+        m.poly_data(pid).quality = SMOOTH_FIELD ? poly_ring_mean(m, field, pid) : field.at(pid);
     }
 
-    // set vert_data.uvw.u and vert_data.color from the weighted average of polys quality
+    // set vert_data.uvw.u from the weighted average of polys quality
     for (uint vid=0; vid<m.num_verts(); ++vid) {
         double value = 0., mass  = 0.;
         for (uint pid : m.adj_v2p(vid)) {
@@ -271,7 +276,8 @@ void ContouredMesh::load_global_field(const std::string field_path)
 template<class M, class E, class V, class P> inline
 void ContouredMesh::color_mesh(AbstractMesh<M,E,V,P> &m) {
     for (uint pid=0; pid<m.num_polys(); ++pid) {
-        double c = (field.at(pid) - field_min) / (field_max - field_min);
+        // double c = (field.at(pid) - field_min) / (field_max - field_min);
+        double c = (m.poly_data(pid).quality - field_min) / (field_max - field_min);
         m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
     }
 
@@ -377,10 +383,10 @@ void ContouredMesh::insert_iso1(AbstractMesh<M,E,V,P> &m)
 template<class M, class E, class V, class P> inline
 void ContouredMesh::insert_iso2(AbstractMesh<M,E,V,P> &m)
 {
-    // set poly_data.quality from the poly 1-ring
-    for (uint pid = 0; pid < m.num_polys(); ++pid) {
-       m.poly_data(pid).quality = poly_ring_mean(m, field, pid);
-    }
+    // set poly_data.quality from the poly 1-ring (already set when loading the field)
+    // for (uint pid = 0; pid < m.num_polys(); ++pid) {
+    //    m.poly_data(pid).quality = poly_ring_mean(m, field, pid);
+    // }
     // assign the same label to all the polys in the same iso-region
     for (uint pid = 0; pid < m.num_polys(); ++pid) {
         bool found = false;
