@@ -68,7 +68,7 @@ private:
     void color_mesh(AbstractMesh<M,E,V,P> &m);
 
     /* compute *n_regions+1* isovalues between min_val and max_val */
-    void compute_iso(const int n_regions, const std::vector<double> &input_isovals);
+    void compute_iso(const int n_regions, const int input_type, const std::vector<double> &input_isovals);
 
     /* insert the isocontours (isosurfaces) cutting the mesh */
     void cut_mesh(Trimesh<> &m);

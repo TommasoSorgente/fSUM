@@ -1,12 +1,12 @@
 ## PARAMETERS FILE
 mesh_path     data/Liguria_grid/11_FSASSELLO/mesh_grid.obj
 field1_path   data/Liguria_grid/11_FSASSELLO/cr_mean.csv
-smooth_field  1
+mean_field    1
 dim           2
 ##
 n_regions     5
-percentiles   0 25 50 75 95 100
-cut_mesh      0
+isoval_type   2
+isoval_vals   0 25 50 75 95 100
 ##
 filter        1
 smoothen      1
@@ -26,24 +26,24 @@ verbose       0
 ## field1_path:  path of the input field #1
 ## field2_path:  path of the input field #2 (optional)
 ## fieldG_path:  path of the input global field (optional)
-## smooth_field: smooth the field values by averaging
-## dim:          dimension of the problem
+## mean_field:   use the geometric mean of the field (0 | 1)
+## dim:          dimension of the problem (2 | 3)
 ##
 ## COMPUTE ISO-REGIONS
-## n_regions:   number of regions to be computed in the domain
-## percentiles: isovalues (absolute or percentiles)
-## cut_mesh:    cut the mesh along isocontours/isosurfaces (ONLY for tri/tet meshes)
+## n_regions:   number of regions to be computed in the domain (in [1,inf])
+## isoval_type: (1) equispaced, (2) percentiles, (3) assigned
+## isoval_vals: isovalues (percentiles or assigned)
 ##
 ## FILTER SMALL REGIONS
-## filter:        apply filtering of small regions
-## smoothen:      apply smoothing of the boundaries
-## n_iter:        max number of iterations
+## filter:        apply filtering of small regions (0 | 1)
+## smoothen:      apply smoothing of the boundaries (0 | 1)
+## n_iter:        max number of iterations (in [0,inf])
 ## filter_thresh: percentual min area of the regions (in [0,100])
 ##
 ## OUTPUT
-## gui:        launch graphical interface
-## show_iso:   show isovalues/isosurfaces on the mesh (the gui becomes very slow)
+## gui:        launch graphical interface (0 | 1)
+## show_iso:   show isovalues/isosurfaces on the mesh (the gui becomes slow) (0 | 1)
 ## out_path:   path do a directory where to save all outputs
 ## out_format: file format for saving the output mesh (0: do not save, -: obj/vtk)
-## verbose:    print debug information
+## verbose:    print debug information (0 | 1)
 */

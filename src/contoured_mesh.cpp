@@ -13,7 +13,7 @@ void ContouredMesh::init(AbstractMesh<M,E,V,P> &m, Parameters &Par)
     // load mesh and scalar fields
     m.load(Par.get_MESH_PATH().c_str());
 
-    load_field(m, Par.get_FIELD1_PATH(), field, Par.get_SMOOTH_FIELD());
+    load_field(m, Par.get_FIELD1_PATH(), field, Par.get_MEAN_FIELD());
     if (Par.get_FIELDG_PATH() != "") {
         load_global_field(Par.get_FIELDG_PATH());
     } else {
@@ -46,7 +46,7 @@ template<class M, class E, class V, class P> inline
 void ContouredMesh::segment(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 {
     prof.push("FESA::segment");
-    compute_iso(Par.get_N_REGIONS(), Par.get_PERCENTILES());
+    compute_iso(Par.get_N_REGIONS(), Par.get_ISOVAL_TYPE(), Par.get_ISOVAL_VALS());
     if (Par.get_CUT_MESH() && (m.mesh_type() == TRIMESH || m.mesh_type() == TETMESH)) {
         // cut_mesh(m); // needs the Tri/Tetmesh class instead of Polygon/Polyhedralmesh
     }
@@ -109,7 +109,7 @@ void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
 
     // print field and isovalues info
     print_field_csv(m, output_path + "/output_field.csv", prof);
-    print_isovals_csv(m, Par.get_PERCENTILES(), isovals, output_path + "/isovalues.txt", prof);
+    print_isovals_csv(m, Par.get_ISOVAL_VALS(), isovals, output_path + "/isovalues.txt", prof);
 
     // save mesh
     std::string domain_dir = output_path + "/domain";
@@ -122,7 +122,7 @@ void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
 
     // print general statistics
     Statistics stats;
-    stats.init(Par.get_PERCENTILES(), isovals, prof);
+    stats.init(Par.get_ISOVAL_VALS(), isovals, prof);
     stats.compute_stats(m, polys_in_subregion);
     stats.print_global_stats(m, Par.get_FILTER_THRESH(), output_path + "/global_stats.txt");
     print_misclassifications(m, isovals, subregion_region_map, output_path + "/misclassifications.csv", prof);
@@ -131,7 +131,7 @@ void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
     print_regions_shp(m, stats, polys_in_subregion, domain_dir + "/domain", prof);
 
     // save a mesh for each iso-subregion
-    stats.init(Par.get_PERCENTILES(), isovals, prof);
+    stats.init(Par.get_ISOVAL_VALS(), isovals, prof);
     print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
 
     // save a mesh for each iso-region
@@ -148,7 +148,7 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 
     // print field and isovalues info
     print_field_csv(m, output_path + "/output_field.csv", prof);
-    print_isovals_csv(m, Par.get_PERCENTILES(), isovals, output_path + "/isovalues.txt", prof);
+    print_isovals_csv(m, Par.get_ISOVAL_VALS(), isovals, output_path + "/isovalues.txt", prof);
 
     // save mesh
     std::string domain_dir = output_path + "/domain";
@@ -161,13 +161,13 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 
     // print general statistics
     Statistics stats;
-    stats.init(Par.get_PERCENTILES(), isovals, prof);
+    stats.init(Par.get_ISOVAL_VALS(), isovals, prof);
     stats.compute_stats(m, polys_in_subregion);
     stats.print_global_stats(m, Par.get_FILTER_THRESH(), output_path + "/global_stats.txt");
     print_misclassifications(m, isovals, subregion_region_map, output_path + "/misclassifications.csv", prof);
 
     // save a mesh for each iso-subregion
-    stats.init(Par.get_PERCENTILES(), isovals, prof);
+    stats.init(Par.get_ISOVAL_VALS(), isovals, prof);
     print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
 
     // save a mesh for each iso-region
@@ -289,11 +289,11 @@ void ContouredMesh::color_mesh(AbstractMesh<M,E,V,P> &m) {
 
 /**********************************************************************/
 
-void ContouredMesh::compute_iso(const int n_regions, const std::vector<double> &input_vals)
+void ContouredMesh::compute_iso(const int n_regions, const int input_type, const std::vector<double> &input_vals)
 {
     prof.push("Compute " + std::to_string(n_regions) + " iso-regions");
 
-    if (input_vals.empty()) { // equi-spaced isovals
+    if (input_type == 1) { // equi-spaced isovals
         double step = abs(field_max - field_min) / n_regions;
         for (int lid = 0; lid < n_regions; ++lid) {
             isovals.push_back(field_min + step * lid);
@@ -301,7 +301,7 @@ void ContouredMesh::compute_iso(const int n_regions, const std::vector<double> &
         isovals.push_back(field_max);
     }
 
-    else { // percentile isovals
+    else if (input_type == 2) { // percentile isovals
         assert(input_vals.front()==0 && input_vals.back()==100);
         for (uint i = 0; i < input_vals.size()-1; ++i) {
             assert(input_vals.at(i) < input_vals.at(i+1) && "input_vals are not ordered");
@@ -313,12 +313,12 @@ void ContouredMesh::compute_iso(const int n_regions, const std::vector<double> &
         }
     }
 
-    // else { // manually set isovals
-    //     for (uint i = 0; i < input_vals.size()-1; ++i) {
-    //         assert(input_vals.at(i) < input_vals.at(i+1) && "isovalues are not ordered");
-    //     }
-    //     isovals = input_vals;
-    // }
+    else if (input_type == 3) { // manually set isovals
+        for (uint i = 0; i < input_vals.size()-1; ++i) {
+            assert(input_vals.at(i) < input_vals.at(i+1) && "isovalues are not ordered");
+        }
+        isovals = input_vals;
+    }
 
     assert((int)isovals.size() == n_regions + 1 && "#isovalues != #regions+1");
     prof.pop();
