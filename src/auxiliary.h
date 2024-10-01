@@ -16,7 +16,7 @@ namespace fs = std::filesystem;
 
 /**********************************************************************/
 
-// compute the *perc*-th percentile relative to the values in *data*
+// compute the isovalue corresponding to the percentile in *data*
 double percentile(const std::vector<double> &data, const double perc)
 {
     assert(!data.empty());
@@ -29,7 +29,23 @@ double percentile(const std::vector<double> &data, const double perc)
         return sortedData[index];
 
     double interpolation = perc * n / 100 - index;
-    return sortedData[index] + interpolation * (sortedData[index+1] - sortedData[index]);
+    double isovalue = sortedData[index] + interpolation * (sortedData[index+1] - sortedData[index]);
+    return isovalue;
+}
+
+// compute the percentile corresponding to the isovalue in *data*
+double inv_percentile(const std::vector<double> &data, const double isovalue)
+{
+    assert(!data.empty());
+    std::vector<double> sortedData = data;
+    sort(sortedData.begin(), sortedData.end());
+    int n = sortedData.size()-1;
+
+    auto it = std::lower_bound(sortedData.begin(), sortedData.end(), isovalue);
+    int index = it - sortedData.begin();
+    double percentile = index * 100 / n;
+    assert(0. <= percentile && percentile <= 100.);
+    return percentile;
 }
 
 /**********************************************************************/

@@ -1,6 +1,7 @@
 ## PARAMETERS FILE
 mesh_path     data/Liguria_grid/11_FSASSELLO/mesh_grid.obj
 field1_path   data/Liguria_grid/11_FSASSELLO/cr_mean.csv
+fieldG_path   data/Liguria_grid/cr_mean_global.csv
 mean_field    1
 dim           2
 ##

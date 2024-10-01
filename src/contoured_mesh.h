@@ -26,7 +26,7 @@ public:
     ContouredMesh(){}
     ~ContouredMesh(){}
 
-    std::vector<double> isovals;
+    std::vector<double> percentiles, isovals;
 
     template<class M, class E, class V, class P> inline
     void init(AbstractMesh<M,E,V,P> &m, Parameters &Par);
