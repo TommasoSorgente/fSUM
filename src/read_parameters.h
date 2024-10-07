@@ -37,6 +37,7 @@ protected:
     bool   SMOOTH;          // apply smoothing of the boundaries
     int    n_iter;          // max number of iterations
     double filter_thresh;   // percentual min size of the regions
+    bool   SIGMA;           // use standard deviation
     bool   gui;             // launch graphical interface
     bool   verbose;         // print debug information
 
@@ -57,6 +58,7 @@ protected:
         SMOOTH        = false;
         n_iter        = 0;
         filter_thresh = 1.;
+        SIGMA         = false;
         out_path      = ".";
         gui           = true;
         ISOCONTOURS   = false;
@@ -82,10 +84,11 @@ protected:
     void read_n_regions(ifstream & inpf)    { inpf >> n_regions; }
     void read_isoval_type(ifstream & inpf)  { inpf >> isoval_type; }
     void read_isoval_vals(ifstream & inpf)  { isoval_vals.clear();
-                                              while ( inpf.get()!='\n' && inpf.good() ) {
-                                                double f;
-                                                inpf >> f;
-                                                isoval_vals.push_back(f);
+                                              string token;
+                                              while (inpf >> token) {
+                                                  if (token == "#") break;
+                                                  try { isoval_vals.push_back(stod(token)); }
+                                                  catch (const invalid_argument& e) { cerr << "Invalid input: " << token << endl; }
                                               }
                                               assert((int)isoval_vals.size()==n_regions+1 && "Error: wrong number of isoval_vals"); }
     void read_ANALYZE(ifstream & inpf)      { inpf >> ANALYZE; }
@@ -93,6 +96,7 @@ protected:
     void read_SMOOTH(ifstream & inpf)       { inpf >> SMOOTH; }
     void read_n_iter(ifstream & inpf)       { inpf >> n_iter; }
     void read_filter_thresh(ifstream & inpf){ inpf >> filter_thresh; }
+    void read_SIGMA(ifstream & inpf)        { inpf >> SIGMA; }
     void read_out_path(ifstream & inpf)     { inpf >> out_path; }
     void read_gui(ifstream & inpf)          { inpf >> gui; }
     void read_ISOCONTOURS(ifstream & inpf)  { inpf >> ISOCONTOURS; }
@@ -116,6 +120,7 @@ protected:
       else if ( keywd == "SMOOTH" )         { read_SMOOTH(inpf); }
       else if ( keywd == "n_iter" )         { read_n_iter(inpf); }
       else if ( keywd == "filter_thresh" )  { read_filter_thresh(inpf); }
+      else if ( keywd == "SIGMA" )          { read_SIGMA(inpf); }
       else if ( keywd == "out_path" )       { read_out_path(inpf); }
       else if ( keywd == "gui" )            { read_gui(inpf); }
       else if ( keywd == "ISOCONTOURS" )    { read_ISOCONTOURS(inpf); }
@@ -145,6 +150,7 @@ public:
     void set_SMOOTH         (const bool value)    { SMOOTH = value; }
     void set_N_ITER         (const int value)     { n_iter = value; }
     void set_FILTER_THRESH  (const double value)  { filter_thresh = value; }
+    void set_SIGMA          (const bool value)    { SIGMA = value; }
     void set_OUT_PATH       (const string value)  { out_path = value; }
     void set_GUI            (const bool value)    { gui = value; }
     void set_ISOCONTOURS    (const bool value)    { ISOCONTOURS = value; }
@@ -166,6 +172,7 @@ public:
     bool   get_SMOOTH ()          { return SMOOTH; }
     int    get_N_ITER ()          { return n_iter; }
     double get_FILTER_THRESH ()   { return filter_thresh; }
+    bool   get_SIGMA ()           { return SIGMA; }
     string get_OUT_PATH ()        { return out_path; }
     bool   get_GUI ()             { return gui; }
     bool   get_ISOCONTOURS ()     { return ISOCONTOURS; }
@@ -192,6 +199,7 @@ public:
       cout << "SMOOTH: "            << SMOOTH << endl;
       cout << "n_iter: "            << n_iter << endl;
       cout << "filter_thresh: "     << filter_thresh << endl;
+      cout << "SIGMA: "             << SIGMA << endl;
       cout << "gui: "               << gui << endl;
       cout << "verbose: "           << verbose << endl;
       cout << "end of print_pars\n"   << endl;

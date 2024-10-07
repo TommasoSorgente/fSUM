@@ -9,15 +9,16 @@ out_path      out/
 ##
 n_regions     5
 isoval_type   2
-isoval_vals   0 25 50 75 95 100
+isoval_vals   0 25 50 75 95 100 #
 DENOISE       1
 ISOCONTOURS   0
 ##
-ANALYZE       0
-FILTER        0
-SMOOTH        0
+ANALYZE       1
+FILTER        1
+SMOOTH        1
 filter_thresh 2
 n_iter        50
+SIGMA         1
 ##
 gui           1
 verbose       0
@@ -46,6 +47,7 @@ verbose       0
 ## SMOOTH:        apply smoothing of the boundaries (0 | 1)
 ## filter_thresh: percentual min size of the regions (in [0,100])
 ## n_iter:        max number of iterations (in [0,inf])
+## SIGMA:         use standard deviation (0 | 1)
 ##
 ## OUTPUT
 ## gui:        launch graphical interface (0 | 1)

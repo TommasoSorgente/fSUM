@@ -97,7 +97,8 @@ int main(int argc, char *argv[])
     Read_Parameters Par(string(HOME_PATH) + "../parameters.run");
     Par.read_file();
 
-    std::vector<std::string> domains{"1_F5TERRE",
+    std::vector<std::string> domains{
+                                     "1_F5TERRE",
                                      "2_FMAGRA",
                                      "3_FPETRONIO",
                                      "4_FPORTOFINO",

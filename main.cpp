@@ -59,6 +59,28 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        bool MISCLASS = true;
+        if (MISCLASS) {
+            std::string misclass_path = FESA.output_path + "/misclassifications.csv";
+            std::ifstream fp(misclass_path.c_str());
+            assert(fp.is_open());
+
+            std::string line;
+            std::getline(fp, line);
+
+            uint pid;
+            vec3d c;
+            double f, l_min, l_max, s_min, s_max, misclass;
+            char d;
+            while (std::getline(fp, line)) {
+                std::stringstream ss(line);
+                ss >> pid >> d >> c.x() >> d >> c.y() >> d >> c.z() >> d >> f >>
+                      d >> l_min >> d >> l_max >> d >> s_min >> d >> s_max >> d >> misclass;
+                gui.push_marker(c, "", Color::BLACK(), 2.);
+            }
+            fp.close();
+        }
+
         SurfaceMeshControls<DrawablePolygonmesh<>> menu(&m, &gui);
         gui.push(&menu);
         gui.launch();

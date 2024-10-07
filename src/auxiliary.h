@@ -138,31 +138,50 @@ void apply_labels_to_mesh(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std:
 
 /**********************************************************************/
 
-double mesh_shape_coefficient(Polygonmesh<> &m) {
-    double perimeter = 0.;
-    for (std::pair<uint,uint> e : m.get_boundary_edges()) {
-        perimeter += m.vert(e.first).dist(m.vert(e.second));
+template<class M, class E, class V, class P> inline
+double poly_misclassification(AbstractMesh<M,E,V,P> &m, const uint pid, const std::pair<double,double> &isovals, const std::pair<double,double> &sigma)
+{
+    double f = m.poly_data(pid).quality;
+    if (sigma.second < isovals.first) {
+        return isovals.first - f;
     }
-    AABB bbox = m.bbox();
+    else if (sigma.first > isovals.second) {
+        return f - isovals.second;
+    }
+    return 0.;
+}
+
+/**********************************************************************/
+
+double mesh_shape_coefficient(Polygonmesh<> &m, Polygonmesh<> &sub_m) {
+    double perimeter = 0.;
+    for (std::pair<uint,uint> e : sub_m.get_boundary_edges()) {
+        perimeter += sub_m.vert(e.first).dist(sub_m.vert(e.second));
+    }
+    AABB bbox = sub_m.bbox();
     double bbox_perimeter = 2. * (bbox.delta_x() + bbox.delta_y());
-    double area = m.mesh_area();
+    double area =sub_m.mesh_area();
+    double entr = area / m.mesh_area();
 
     double smoothness  = bbox_perimeter / perimeter;
     double compactness = sqrt(area) / perimeter;
-    return (compactness + smoothness) / 2.;
+    double entropy     = entr * log(entr);
+    return (compactness + smoothness + entropy) / 1.;
 }
 
-double mesh_shape_coefficient(Polyhedralmesh<> &m) {
-    double srf_area = m.mesh_srf_area();
-    AABB bbox = m.bbox();
+double mesh_shape_coefficient(Polyhedralmesh<> &m, Polyhedralmesh<> &sub_m) {
+    double srf_area = sub_m.mesh_srf_area();
+    AABB bbox = sub_m.bbox();
     double bbox_area = 2. * (bbox.delta_x() * bbox.delta_y() +
                              bbox.delta_x() * bbox.delta_z() +
                              bbox.delta_y() * bbox.delta_z());
-    double volume = m.mesh_volume();
+    double volume = sub_m.mesh_volume();
+    double entr   = volume / m.mesh_volume();
 
     double smoothness  = bbox_area / srf_area;
     double compactness = cbrt(volume) / srf_area;
-    return (compactness + smoothness) / 2.;
+    double entropy     = entr * log(entr);
+    return (compactness + smoothness + entropy) / 1.;
 }
 
 /**********************************************************************/
@@ -226,23 +245,19 @@ void print_misclassifications(AbstractMesh<M,E,V,P> &m, const std::vector<double
     fp << std::fixed;
 
     for(uint pid=0; pid<m.num_polys(); ++pid) {
-        vec3d c = m.poly_centroid(pid);
         int tmp_label = m.poly_data(pid).label;
         auto it = subregion_region_map.find(tmp_label);
         int l = (it == subregion_region_map.end()) ? tmp_label : it->second;
         double iso_min = isovals.at(l);
         double iso_max = isovals.at(l+1);
 
-        double f = m.poly_data(pid).quality;
-        double d = 0.;
-        if      (f < iso_min) { d = iso_min - f; }
-        else if (f > iso_max) { d = f - iso_max; }
-
-        if (d > 0) {
+        double misclass = poly_misclassification(m, pid, {iso_min,iso_max}, {0.,0.});
+        vec3d c = m.poly_centroid(pid);
+        if (misclass > 0) {
             fp.precision(2);
             fp << pid << ", " << c.x() << ", " << c.y() << ", " << c.z() << ", ";
             fp.precision(6);
-            fp << f << ", " << iso_min << ", " << iso_max << ", " << d << std::endl;
+            fp << m.poly_data(pid).quality << ", " << iso_min << ", " << iso_max << ", " << misclass << std::endl;
         }
     }
     fp.close();
@@ -287,7 +302,7 @@ void print_verts_csv(AbstractMesh<M,E,V,P> &m, const std::string filename, Profi
         fp.precision(2);
         fp << vid << ", " << v.x() << ", " << v.y() << ", " << v.z() << ", ";
         fp.precision(6);
-        fp << m.vert_data(vid).uvw.u() << std::endl;
+        fp << m.vert_data(vid).quality << std::endl;
     }
     fp.close();
     Prof.pop();

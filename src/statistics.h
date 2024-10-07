@@ -12,18 +12,32 @@ using namespace cinolib;
 class Statistics {
 
 private:
-  std::vector<double> percvals;
-  std::vector<double> isovals;
+  std::vector<double> percvals, isovals;
+  std::vector<double> field_m_sigma, field_p_sigma;
   std::unordered_map<int, std::vector<uint>> polys_in_region;
   Profiler Prof;
+
+  void load_sigma(const std::string path, std::vector<double> &field) {
+      if (path == "") return;
+      std::ifstream fp(path.c_str());
+      assert(fp.is_open());
+      double f;
+      while (fp >> f) {
+          field.push_back(f);
+      }
+      fp.close();
+  }
 
 public:
   Statistics() {}
   ~Statistics() {}
 
-  void init(std::vector<double> perc, std::vector<double> vals, Profiler p) {
+  void init(const std::vector<double> &perc, const std::vector<double> &vals, Profiler p,
+            const std::string sigma_m="", const std::string sigma_p="") {
       percvals = perc;
       isovals = vals;
+      load_sigma(sigma_m, field_m_sigma);
+      load_sigma(sigma_p, field_p_sigma);
       Prof = p;
       polys_in_region.clear();
       clear_stats();
@@ -39,6 +53,9 @@ public:
 
   template<class M, class E, class V, class P> inline
   void print_global_stats(AbstractMesh<M,E,V,P> &m, const double param, const std::string path);
+
+  template<class M, class E, class V, class P> inline
+  void print_misclassification(AbstractMesh<M,E,V,P> &m, const std::string path);
 
   // vectors for storing information about each region:
   std::vector<int> label_vec;    // label of the region
@@ -123,27 +140,29 @@ void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int,
             Polygonmesh<> *m_tmp = reinterpret_cast<Polygonmesh<>*>(&m);
             Polygonmesh<> sub_m;
             export_cluster(*m_tmp, l.first, sub_m);
-            double c = mesh_shape_coefficient(sub_m);
+            double c = mesh_shape_coefficient(*m_tmp, sub_m);
             shape_coeff_vec.push_back(c);
         } else {
             Polyhedralmesh<> *m_tmp = reinterpret_cast<Polyhedralmesh<>*>(&m);
             Polyhedralmesh<> sub_m;
             export_cluster(*m_tmp, l.first, sub_m);
-            double c = mesh_shape_coefficient(sub_m);
+            double c = mesh_shape_coefficient(*m_tmp, sub_m);
             shape_coeff_vec.push_back(c);
         }
 
         double misclass = 0.;
         for (uint pid : l.second) {
-            double f = m.poly_data(pid).quality;
-            double isovalue = iso_vec.back().second;
-            if (f > isovalue) { // TO FIX
-                misclass += f - isovalue;
-                ++n_misclass_vec.back();
+            std::pair<double,double> sigma = {m.poly_data(pid).quality, m.poly_data(pid).quality};
+            if (field_m_sigma.size() > 0 && field_p_sigma.size() > 0) {
+                sigma = {field_m_sigma[pid], field_p_sigma[pid]};
             }
+            double d = poly_misclassification(m, pid, iso_vec.back(), sigma);
+            misclass += d;
+            if (d > 0)
+                ++n_misclass_vec.back();
         }
         // misclass /= iso_vec.back().second - iso_vec.back().first;
-        misclass_vec.push_back(misclass > 0. ? 1./misclass : 0.);
+        // misclass_vec.push_back(misclass > 0. ? 1./misclass : 0.);
         misclass_vec.push_back(misclass);
     }
     Prof.pop();
@@ -201,6 +220,40 @@ void Statistics::print_global_stats(AbstractMesh<M,E,V,P> &m, const double param
     n /= m.num_polys();
 
     fp << param << ", " << q << ", " << c << ", " << n << std::endl;
+    fp.close();
+}
+
+/**********************************************************************/
+
+template<class M, class E, class V, class P> inline
+void Statistics::print_misclassification(AbstractMesh<M,E,V,P> &m, const std::string path) {
+    std::ofstream fp(path.c_str());
+    assert(fp.is_open());
+    fp << "# pid, centroid x, centroid y, centroid z, field, isovalue_min, isovalue_max, field_m_sigma, field_p_sigma, misclassification" << std::endl;
+    fp << std::fixed;
+
+    uint count = 0;
+    for (auto &l : polys_in_region) {
+        for (uint pid : l.second) {
+            std::pair<double,double> lambda = iso_vec[count];
+            std::pair<double,double> sigma = {m.poly_data(pid).quality, m.poly_data(pid).quality};
+            if (field_m_sigma.size() > 0 && field_p_sigma.size() > 0) {
+                sigma = {field_m_sigma[pid], field_p_sigma[pid]};
+            }
+            double misclass = poly_misclassification(m, pid, lambda, sigma);
+            vec3d c = m.poly_centroid(pid);
+            if (misclass > 1e-4) {
+                fp.precision(2);
+                fp << pid << ", " << c.x() << ", " << c.y() << ", " << c.z() << ", ";
+                fp.precision(6);
+                fp << m.poly_data(pid).quality << ", "
+                   << lambda.first << ", " << lambda.second << ", "
+                   << sigma.first << ", " << sigma.second << ", "
+                   << misclass << std::endl;
+            }
+        }
+        ++count;
+    }
     fp.close();
 }
 

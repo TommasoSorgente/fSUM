@@ -69,7 +69,7 @@ void ContouredMesh::segment(AbstractMesh<M,E,V,P> &m, Parameters &Par)
     prof.push("FESA::segment");
     compute_isovalues(Par.get_N_REGIONS(), Par.get_ISOVAL_TYPE(), Par.get_ISOVAL_VALS());
 
-    compute_isoregions2(m, Par.get_DENOISE());
+    compute_isoregions(m, Par.get_DENOISE());
 
     separate_ccs(m); // from now on, we switch from regions to subregions!
 
@@ -140,16 +140,25 @@ void ContouredMesh::output(Polygonmesh<> &m, Parameters &Par)
 
     // print general statistics
     Statistics stats;
-    stats.init(percentiles, isovals, prof);
+    size_t pnt = Par.get_FIELD_PATH().find_last_of('.');
+    std::string tmp = Par.get_FIELD_PATH().substr(0, pnt);
+    std::string sigma_m = tmp + "_m_sigma.csv", sigma_p = tmp + "_p_sigma.csv";
+    if (Par.get_SIGMA())
+        stats.init(percentiles, isovals, prof, sigma_m, sigma_p);
+    else
+        stats.init(percentiles, isovals, prof);
     stats.compute_stats(m, polys_in_subregion);
     stats.print_global_stats(m, Par.get_FILTER_THRESH(), output_path + "/global_stats.txt");
-    print_misclassifications(m, isovals, subregion_region_map, output_path + "/misclassifications.csv", prof);
+    stats.print_misclassification(m, output_path + "/misclassifications.csv");
 
     // generate a shapefile containing the iso-regions boundaries
     print_regions_shp(m, stats, polys_in_subregion, domain_dir + "/domain", prof);
 
     // save a mesh for each iso-subregion
-    stats.init(percentiles, isovals, prof);
+    if (Par.get_SIGMA())
+        stats.init(percentiles, isovals, prof, sigma_m, sigma_p);
+    else
+        stats.init(percentiles, isovals, prof);
     print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
 
     // save a mesh for each iso-region
@@ -179,13 +188,22 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 
     // print general statistics
     Statistics stats;
-    stats.init(percentiles, isovals, prof);
+    size_t pnt = Par.get_FIELD_PATH().find_last_of('.');
+    std::string tmp = Par.get_FIELD_PATH().substr(0, pnt);
+    std::string sigma_m = tmp + "_m_sigma.csv", sigma_p = tmp + "_p_sigma.csv";
+    if (Par.get_SIGMA())
+        stats.init(percentiles, isovals, prof, sigma_m, sigma_p);
+    else
+        stats.init(percentiles, isovals, prof);
     stats.compute_stats(m, polys_in_subregion);
     stats.print_global_stats(m, Par.get_FILTER_THRESH(), output_path + "/global_stats.txt");
-    print_misclassifications(m, isovals, subregion_region_map, output_path + "/misclassifications.csv", prof);
+    stats.print_misclassification(m, output_path + "/misclassifications.csv");
 
     // save a mesh for each iso-subregion
-    stats.init(percentiles, isovals, prof);
+    if (Par.get_SIGMA())
+        stats.init(percentiles, isovals, prof, sigma_m, sigma_p);
+    else
+        stats.init(percentiles, isovals, prof);
     print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
 
     // save a mesh for each iso-region
@@ -223,7 +241,7 @@ void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field
     } else if (field_type == 2) {
         assert(field.size() == m.num_verts());
         for (uint vid=0; vid<m.num_verts(); ++vid) {
-            m.vert_data(vid).uvw.u() = field.at(vid);
+            m.vert_data(vid).quality = field.at(vid);
         }
     }
 
@@ -241,7 +259,7 @@ void ContouredMesh::extend_field_to_verts(AbstractMesh<M,E,V,P> &m)
             value += field.at(pid) * coeff;
             mass  += coeff;
         }
-        m.vert_data(vid).uvw.u() = value / mass;
+        m.vert_data(vid).quality = value / mass;
     }
 }
 
@@ -252,7 +270,7 @@ void ContouredMesh::extend_field_to_cells(AbstractMesh<M,E,V,P> &m)
     for (uint pid=0; pid<m.num_polys(); ++pid) {
         double value = 0.;
         for (uint vid : m.adj_p2v(pid)) {
-            value += m.vert_data(vid).uvw.u();
+            value += m.vert_data(vid).quality;
         }
         m.poly_data(pid).quality = value / m.verts_per_poly(pid);
     }
@@ -288,7 +306,7 @@ void ContouredMesh::color_mesh(AbstractMesh<M,E,V,P> &m) {
     }
 
     for (uint vid=0; vid<m.num_verts(); ++vid) {
-        double c = (m.vert_data(vid).uvw.u() - field_min) / (field_max - field_min);
+        double c = (m.vert_data(vid).quality - field_min) / (field_max - field_min);
         m.vert_data(vid).color = Color::red_white_blue_ramp_01(1. - c);
     }
 }
@@ -380,22 +398,20 @@ void ContouredMesh::compute_isoregions(AbstractMesh<M,E,V,P> &m, const bool DENO
     // assign the same label to all the polys in the same iso-region
     for (uint pid = 0; pid < m.num_polys(); ++pid) {
         bool found = false;
-        double val1 = poly_ring_mean(m, field, pid);
-        double val2 = m.poly_data(pid).quality;
-        if (fabs(val1-val2)>1e-4)
-            int g=0;
-
         double val = DENOISE ? poly_ring_mean(m, field, pid) : m.poly_data(pid).quality;
-        for (int lid = 0; lid < (int)isovals.size() - 1; ++lid) {
-            if (isovals.at(lid) <= val && val < isovals.at(lid + 1)) {
-                m.poly_data(pid).label = lid;
-                found = true;
-                break;
-            }
-            if (fabs(val - isovals.front()) < 1e-4 || fabs(val - isovals.back()) < 1e-4) {
-                m.poly_data(pid).label = lid;
-                found = true;
-                break;
+        if (fabs(val - isovals.front()) < 1e-4) {
+            m.poly_data(pid).label = 0;
+            found = true;
+        } else if (fabs(val - isovals.back()) < 1e-4) {
+            m.poly_data(pid).label = isovals.size()-2;
+            found = true;
+        } else {
+            for (int lid = 0; lid < (int)isovals.size() - 1; ++lid) {
+                if (isovals.at(lid) <= val && val < isovals.at(lid + 1)) {
+                    m.poly_data(pid).label = lid;
+                    found = true;
+                    break;
+                }
             }
         }
         assert(found);

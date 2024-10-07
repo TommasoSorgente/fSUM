@@ -42,6 +42,7 @@ public:
 
     void output(Polygonmesh<> &m,    Parameters &Par);
     void output(Polyhedralmesh<> &m, Parameters &Par);
+    std::string output_path;
 
 private:
     double field_correction = 0.;
@@ -53,7 +54,6 @@ private:
     std::unordered_map<int, int> subregion_region_map;
     Profiler prof;
     bool verbose;
-    std::string output_path;
 
     /* load the scalar field and assign a field value to cells and vertices */
     template<class M, class E, class V, class P> inline
