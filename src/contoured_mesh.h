@@ -38,7 +38,7 @@ public:
     void filter(AbstractMesh<M,E,V,P> &m, Parameters &Par);
 
     template<class M, class E, class V, class P> inline
-    void smooth_boundaries(AbstractMesh<M,E,V,P> &m, Parameters &Par);
+    void smooth(AbstractMesh<M,E,V,P> &m, Parameters &Par);
 
     void output(Polygonmesh<> &m,    Parameters &Par);
     void output(Polyhedralmesh<> &m, Parameters &Par);
@@ -46,7 +46,7 @@ public:
 private:
     double field_correction = 0.;
     double field_min, field_max;
-    std::map<uint,double> field, second_field;
+    std::map<uint,double> field;
     std::vector<double> global_field;
     std::unordered_map<int, std::vector<uint>> polys_in_region;
     std::unordered_map<int, std::vector<uint>> polys_in_subregion;
@@ -57,18 +57,20 @@ private:
 
     /* load the scalar field and assign a field value to cells and vertices */
     template<class M, class E, class V, class P> inline
-    void load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path,
-                           std::map<uint,double> &field, bool SMOOTH_FIELD);
-    void load_global_field(const std::string field_path);
+    void load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, const int field_type);
     template<class M, class E, class V, class P> inline
-    void load_second_field(AbstractMesh<M,E,V,P> &m, const std::string field_path);
+    void extend_field_to_verts(AbstractMesh<M,E,V,P> &m);
+    template<class M, class E, class V, class P> inline
+    void extend_field_to_cells(AbstractMesh<M,E,V,P> &m);
+
+    void load_global_field(const std::string field_path);
 
     /* color the mesh elements and vertices wrt the field */
     template<class M, class E, class V, class P> inline
     void color_mesh(AbstractMesh<M,E,V,P> &m);
 
     /* compute *n_regions+1* isovalues between min_val and max_val */
-    void compute_iso(const int n_regions, const int input_type, const std::vector<double> &input_isovals);
+    void compute_isovalues(const int n_regions, const int input_type, const std::vector<double> &input_isovals);
 
     /* insert the isocontours (isosurfaces) cutting the mesh */
     void cut_mesh(Trimesh<> &m);
@@ -76,11 +78,9 @@ private:
 
     /* label the elements inside the isoregions in the mesh */
     template<class M, class E, class V, class P> inline
-    void insert_iso1(AbstractMesh<M,E,V,P> &m);
+    void compute_isoregions(AbstractMesh<M,E,V,P> &m, const bool DENOISE);
     template<class M, class E, class V, class P> inline
-    void insert_iso2(AbstractMesh<M,E,V,P> &m);
-    template<class M, class E, class V, class P> inline
-    void insert_iso3(AbstractMesh<M,E,V,P> &m);
+    void compute_isoregions2(AbstractMesh<M,E,V,P> &m, const bool DENOISE);
 
     /* separate connected components of each label */
     template<class M, class E, class V, class P> inline

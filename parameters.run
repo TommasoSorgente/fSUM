@@ -1,50 +1,53 @@
 ## PARAMETERS FILE
-mesh_path     data/Liguria_grid/11_FSASSELLO/mesh_grid.obj
-field1_path   data/Liguria_grid/11_FSASSELLO/cr_mean.csv
-fieldG_path   data/Liguria_grid/cr_mean_global.csv
-mean_field    1
 dim           2
+mesh_path     data/Liguria_grid/11_FSASSELLO/mesh_grid.obj
+field_path    data/Liguria_grid/11_FSASSELLO/cr_mean.csv
+field_type    1
+FGLOBAL       0
+fieldG_path   data/Liguria_grid/cr_mean_global.csv
+out_path      out/
 ##
 n_regions     5
 isoval_type   2
 isoval_vals   0 25 50 75 95 100
+DENOISE       1
+ISOCONTOURS   0
 ##
-filter        1
-smoothen      1
-n_iter        50
+ANALYZE       0
+FILTER        0
+SMOOTH        0
 filter_thresh 2
+n_iter        50
 ##
 gui           1
-show_iso      0
-out_path      out/
-out_format    -
 verbose       0
 
 ## LEGEND
 ##
 ## INPUT
-## mesh_path:    path of the input mesh
-## field1_path:  path of the input field #1
-## field2_path:  path of the input field #2 (optional)
-## fieldG_path:  path of the input global field (optional)
-## mean_field:   use the geometric mean of the field (0 | 1)
 ## dim:          dimension of the problem (2 | 3)
+## mesh_path:    path of the input mesh
+## field_path:   path of the input field
+## field_type:   input field defined on cells or vertices (1 | 2)
+## FGLOBAL:      use of the global field (0 | 1)
+## fieldG_path:  path of the input global field
+## out_path:     path do a directory where to save all outputs
 ##
 ## COMPUTE ISO-REGIONS
-## n_regions:   number of regions to be computed in the domain (in [1,inf])
-## isoval_type: (1) equispaced, (2) percentiles, (3) assigned
-## isoval_vals: isovalues (percentiles or assigned)
+## n_regions:    number of regions to be computed in the domain (in [1,inf])
+## isoval_type:  (1) equispaced, (2) percentiles, (3) assigned
+## isoval_vals:  isovalues (percentiles or explicit)
+## DENOISE:      use the denoised field for isoregions (0 | 1)
+## ISOCONTOURS:  compute isocontours/isosurfaces (0 | 1)
 ##
 ## FILTER SMALL REGIONS
-## filter:        apply filtering of small regions (0 | 1)
-## smoothen:      apply smoothing of the boundaries (0 | 1)
+## ANALYZE:       analyze regions (0 | 1)
+## FILTER:        apply filtering of small regions (0 | 1)
+## SMOOTH:        apply smoothing of the boundaries (0 | 1)
+## filter_thresh: percentual min size of the regions (in [0,100])
 ## n_iter:        max number of iterations (in [0,inf])
-## filter_thresh: percentual min area of the regions (in [0,100])
 ##
 ## OUTPUT
 ## gui:        launch graphical interface (0 | 1)
-## show_iso:   show isovalues/isosurfaces on the mesh (the gui becomes slow) (0 | 1)
-## out_path:   path do a directory where to save all outputs
-## out_format: file format for saving the output mesh (0: do not save, -: obj/vtk)
 ## verbose:    print debug information (0 | 1)
 */

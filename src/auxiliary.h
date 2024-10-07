@@ -95,7 +95,7 @@ void mark_edges(AbstractMesh<M,E,V,P> &m)
     }
 }
 
-void mark_faces(Tetmesh<> &m)
+void mark_faces(Polyhedralmesh<> &m)
 {
     for (uint fid=0; fid<m.num_faces(); ++fid) {
         m.face_data(fid).flags[MARKED] = false;

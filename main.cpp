@@ -15,7 +15,8 @@ int main(int argc, char *argv[]) {
     Par.read_file();
     if (argc == 4) { // get mesh and fields from automatic routine
         Par.set_MESH_PATH(argv[1]);
-        Par.set_FIELD1_PATH(argv[2]);
+        Par.set_FIELD_PATH(argv[2]);
+        Par.set_FGLOBAL(true);
         Par.set_FIELDG_PATH(argv[3]);
         Par.set_GUI(false);
     }
@@ -29,14 +30,10 @@ int main(int argc, char *argv[]) {
         DrawablePolygonmesh<> m;
         FESA.init(m, Par);
         FESA.segment(m, Par);
-        if (Par.get_FILTER())
-            FESA.filter(m, Par);
-        if (Par.get_SMOOTHEN())
-            FESA.smooth_boundaries(m, Par);
-        FESA.output(m, Par);
+        if (Par.get_FILTER())  FESA.filter(m, Par);
+        if (Par.get_SMOOTH())  FESA.smooth(m, Par);
+        if (Par.get_ANALYZE()) FESA.output(m, Par);
         if (!Par.get_GUI()) break;
-
-        mark_edges(m);
 
         m.show_wireframe_transparency(0.2f);
         int n_labels = Par.get_N_REGIONS() - 1;
@@ -46,13 +43,13 @@ int main(int argc, char *argv[]) {
         }
         // m.poly_color_wrt_label(false);
         m.show_poly_color();
-        // m.show_vert_color();
+        mark_edges(m);
         m.updateGL();
 
         GLcanvas gui(1000, 1000);
         gui.push(&m);
 
-        if (Par.get_SHOW_ISO()) {
+        if (Par.get_ISOCONTOURS()) {
             std::vector<double> isovalues = FESA.isovals;
             for (uint i=0; i<isovalues.size(); ++i) {
                 DrawableIsocontour<> *contour = new DrawableIsocontour<>(m, isovalues.at(i));
@@ -64,8 +61,6 @@ int main(int argc, char *argv[]) {
 
         SurfaceMeshControls<DrawablePolygonmesh<>> menu(&m, &gui);
         gui.push(&menu);
-        // gui.camera.rotate_x(-90);
-        // gui.update_GL_matrices();
         gui.launch();
         break;
     }
@@ -73,31 +68,26 @@ int main(int argc, char *argv[]) {
         DrawablePolyhedralmesh<> m;
         FESA.init(m, Par);
         FESA.segment(m, Par);
-        if (Par.get_FILTER())
-            FESA.filter(m, Par);
-        if (Par.get_SMOOTHEN())
-            FESA.smooth_boundaries(m, Par);
-        FESA.output(m, Par);
+        if (Par.get_FILTER())  FESA.filter(m, Par);
+        if (Par.get_SMOOTH())  FESA.smooth(m, Par);
+        if (Par.get_ANALYZE()) FESA.output(m, Par);
         if (!Par.get_GUI()) break;
 
         m.show_out_wireframe_transparency(0.2f);
-        m.poly_color_wrt_label(true);
+        int n_labels = Par.get_N_REGIONS() - 1;
+        for(uint pid=0; pid<m.num_polys(); ++pid) {
+            float c = (float)m.poly_data(pid).label / n_labels;
+            m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
+        }
+        // m.poly_color_wrt_label(true);
         m.show_out_poly_color();
+        mark_faces(m);
         m.updateGL();
 
         GLcanvas gui(1000, 1000);
         gui.push(&m);
 
-        if (Par.get_SHOW_ISO()) {
-            assert(false && "show_iso not working for 3D meshes!");
-            std::vector<double> isovalues = FESA.isovals;
-            Tetmesh<> m_tet(m.vector_verts(), m.vector_polys());
-            for (uint i=0; i<isovalues.size(); ++i) {
-                DrawableIsosurface<> *surface = new DrawableIsosurface<>(m_tet, isovalues.at(i));
-                surface->color = Color::BLACK(); //parula_ramp(isovalues.size(), i);
-                gui.push(surface);
-            }
-        }
+        if (Par.get_ISOCONTOURS()) assert(false && "show_iso not working for 3D meshes!");
 
         VolumeMeshControls<DrawablePolyhedralmesh<>> menu(&m, &gui);
         gui.push(&menu);

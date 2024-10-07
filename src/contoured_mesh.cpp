@@ -13,8 +13,15 @@ void ContouredMesh::init(AbstractMesh<M,E,V,P> &m, Parameters &Par)
     // load mesh and scalar fields
     m.load(Par.get_MESH_PATH().c_str());
 
-    load_field(m, Par.get_FIELD1_PATH(), field, Par.get_MEAN_FIELD());
-    if (Par.get_FIELDG_PATH() != "") {
+    load_field(m, Par.get_FIELD_PATH(), Par.get_FIELD_TYPE());
+    if (Par.get_FIELD_TYPE() == 1)
+        extend_field_to_verts(m);
+    else if (Par.get_FIELD_TYPE() == 2)
+        extend_field_to_cells(m);
+    else
+        assert(false && "unknown field type");
+
+    if (Par.get_FGLOBAL()) {
         load_global_field(Par.get_FIELDG_PATH());
     } else {
         for (uint i=0; i<field.size(); ++i) {
@@ -60,12 +67,9 @@ template<class M, class E, class V, class P> inline
 void ContouredMesh::segment(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 {
     prof.push("FESA::segment");
-    compute_iso(Par.get_N_REGIONS(), Par.get_ISOVAL_TYPE(), Par.get_ISOVAL_VALS());
-    if (Par.get_CUT_MESH() && (m.mesh_type() == TRIMESH || m.mesh_type() == TETMESH)) {
-        // cut_mesh(m); // needs the Tri/Tetmesh class instead of Polygon/Polyhedralmesh
-    }
+    compute_isovalues(Par.get_N_REGIONS(), Par.get_ISOVAL_TYPE(), Par.get_ISOVAL_VALS());
 
-    insert_iso2(m);
+    compute_isoregions2(m, Par.get_DENOISE());
 
     separate_ccs(m); // from now on, we switch from regions to subregions!
 
@@ -103,7 +107,7 @@ void ContouredMesh::filter(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 /**********************************************************************/
 
 template<class M, class E, class V, class P> inline
-void ContouredMesh::smooth_boundaries(AbstractMesh<M,E,V,P> &m, Parameters &Par)
+void ContouredMesh::smooth(AbstractMesh<M,E,V,P> &m, Parameters &Par)
 {
     prof.push("FESA::smooth boundaries");
     int j = 0, count = 1;
@@ -196,27 +200,40 @@ void ContouredMesh::output(Polyhedralmesh<> &m, Parameters &Par)
 /**********************************************************************/
 
 template<class M, class E, class V, class P> inline
-void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, std::map<uint,double> &field, bool MEAN_FIELD)
+void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field_path, const int field_type)
 {
     prof.push("Input field:  " + field_path);
     // load the field from file
     std::ifstream fp(field_path.c_str());
     assert(fp.is_open());
     double f;
-    int _pid = 0;
+    int i = 0;
     while (fp >> f) {
-        field[_pid] = f + field_correction;
-        ++_pid;
+        field[i] = f + field_correction;
+        ++i;
     }
     fp.close();
     assert(m.num_polys() <= field.size());
 
-    // set poly_data.quality from the field values
-    for (uint pid=0; pid<m.num_polys(); ++pid) {
-        m.poly_data(pid).quality = MEAN_FIELD ? poly_ring_mean(m, field, pid) : field.at(pid);
+    if (field_type == 1) {
+        assert(field.size() == m.num_polys());
+        for (uint pid=0; pid<m.num_polys(); ++pid) {
+            m.poly_data(pid).quality = field.at(pid);
+        }
+    } else if (field_type == 2) {
+        assert(field.size() == m.num_verts());
+        for (uint vid=0; vid<m.num_verts(); ++vid) {
+            m.vert_data(vid).uvw.u() = field.at(vid);
+        }
     }
 
-    // set vert_data.uvw.u from the weighted average of polys quality
+    prof.pop();
+}
+
+template<class M, class E, class V, class P> inline
+void ContouredMesh::extend_field_to_verts(AbstractMesh<M,E,V,P> &m)
+{
+    // set vert_data.uvw.u from the weighted average of poly.data.quality
     for (uint vid=0; vid<m.num_verts(); ++vid) {
         double value = 0., mass  = 0.;
         for (uint pid : m.adj_v2p(vid)) {
@@ -224,46 +241,21 @@ void ContouredMesh::load_field(AbstractMesh<M,E,V,P> &m, const std::string field
             value += field.at(pid) * coeff;
             mass  += coeff;
         }
-        value /= mass;
-        m.vert_data(vid).uvw.u() = value;
+        m.vert_data(vid).uvw.u() = value / mass;
     }
-    prof.pop();
 }
 
 template<class M, class E, class V, class P> inline
-void ContouredMesh::load_second_field(AbstractMesh<M,E,V,P> &m, const std::string field_path)
+void ContouredMesh::extend_field_to_cells(AbstractMesh<M,E,V,P> &m)
 {
-    prof.push("Input second_field: \t" + field_path);
-    // load the field from file
-    std::ifstream fp(field_path.c_str());
-    assert(fp.is_open());
-    double f;
-    int _pid = 0;
-    while (fp >> f) {
-        second_field[_pid] = f;
-        ++_pid;
-    }
-    fp.close();
-    assert(m.num_polys() <= second_field.size());
-
-    // store the field value in each poly
-    std::vector<double> poly_heights(m.num_polys());
+    // set poly.data.quality from the average of vert_data.uvw.u
     for (uint pid=0; pid<m.num_polys(); ++pid) {
-        poly_heights.at(pid) = second_field.at(pid);
-    }
-
-    // set vert.y to a weighted average of the neighboring poly values
-    for (uint vid=0; vid<m.num_verts(); ++vid) {
-        double value = 0., mass  = 0.;
-        for (uint pid : m.adj_v2p(vid)) {
-            double coeff = m.poly_mass(pid) / m.verts_per_poly(pid);
-            value += poly_heights.at(pid) * coeff;
-            mass  += coeff;
+        double value = 0.;
+        for (uint vid : m.adj_p2v(pid)) {
+            value += m.vert_data(vid).uvw.u();
         }
-        value /= mass;
-        m.vert(vid).y() = value; //exp(value);
+        m.poly_data(pid).quality = value / m.verts_per_poly(pid);
     }
-    prof.pop();
 }
 
 void ContouredMesh::load_global_field(const std::string field_path)
@@ -303,7 +295,7 @@ void ContouredMesh::color_mesh(AbstractMesh<M,E,V,P> &m) {
 
 /**********************************************************************/
 
-void ContouredMesh::compute_iso(const int n_regions, const int input_type, const std::vector<double> &input_vals)
+void ContouredMesh::compute_isovalues(const int n_regions, const int input_type, const std::vector<double> &input_vals)
 {
     prof.push("Compute " + std::to_string(n_regions) + " iso-regions");
 
@@ -345,8 +337,10 @@ void ContouredMesh::compute_iso(const int n_regions, const int input_type, const
             isovals = input_vals;
             break;
         }
-        default:
+        default: {
+            assert(false && "unknown isovalues type");
             break;
+        }
     }
     assert((int)isovals.size() == n_regions + 1 && "#isovalues != #regions+1");
     prof.pop();
@@ -381,44 +375,17 @@ void ContouredMesh::cut_mesh(Tetmesh<> &m)
 /**********************************************************************/
 
 template<class M, class E, class V, class P> inline
-void ContouredMesh::insert_iso1(AbstractMesh<M,E,V,P> &m)
+void ContouredMesh::compute_isoregions(AbstractMesh<M,E,V,P> &m, const bool DENOISE)
 {
-    // set poly_data.quality from the vertices values
-    for (uint pid = 0; pid < m.num_polys(); ++pid) {
-        double p_value = 0.;
-        for (uint vid : m.adj_p2v(pid)) {
-            p_value += m.vert_data(vid).uvw.u();
-        }
-        m.poly_data(pid).quality = p_value / m.adj_p2v(pid).size();
-    }
-    // assign the same label to all the polys in the same iso-region
-    for (uint pid = 0; pid < m.num_polys(); ++pid) {
-        double val = m.poly_data(pid).quality;
-        for (int lid = 0; lid < (int)isovals.size() - 1; ++lid) {
-            if (isovals.at(lid) <= val && val < isovals.at(lid + 1)) {
-                m.poly_data(pid).label = lid;
-                break;
-            }
-            if (fabs(val - isovals.front()) < 1e-4 || fabs(val - isovals.back()) < 1e-4) {
-                m.poly_data(pid).label = lid;
-                break;
-            }
-        }
-    }
-    update_regions_map(m, polys_in_region);
-}
-
-template<class M, class E, class V, class P> inline
-void ContouredMesh::insert_iso2(AbstractMesh<M,E,V,P> &m)
-{
-    // set poly_data.quality from the poly 1-ring (already set when loading the field)
-    // for (uint pid = 0; pid < m.num_polys(); ++pid) {
-    //    m.poly_data(pid).quality = poly_ring_mean(m, field, pid);
-    // }
     // assign the same label to all the polys in the same iso-region
     for (uint pid = 0; pid < m.num_polys(); ++pid) {
         bool found = false;
-        double val = m.poly_data(pid).quality;
+        double val1 = poly_ring_mean(m, field, pid);
+        double val2 = m.poly_data(pid).quality;
+        if (fabs(val1-val2)>1e-4)
+            int g=0;
+
+        double val = DENOISE ? poly_ring_mean(m, field, pid) : m.poly_data(pid).quality;
         for (int lid = 0; lid < (int)isovals.size() - 1; ++lid) {
             if (isovals.at(lid) <= val && val < isovals.at(lid + 1)) {
                 m.poly_data(pid).label = lid;
@@ -437,19 +404,14 @@ void ContouredMesh::insert_iso2(AbstractMesh<M,E,V,P> &m)
 }
 
 template<class M, class E, class V, class P> inline
-void ContouredMesh::insert_iso3(AbstractMesh<M,E,V,P> &m)
+void ContouredMesh::compute_isoregions2(AbstractMesh<M,E,V,P> &m, const bool DENOISE)
 {
-    // set vert_data.quality from the vert 1-ring
-    for (uint vid = 0; vid < m.num_verts(); ++vid) {
-        m.vert_data(vid).quality = vert_ring_mean(m, field, vid);
-    }
-
     // assign the same label to all the polys in the same iso-region
     for (uint pid = 0; pid < m.num_polys(); ++pid) {
         vector<int> vert_labels(isovals.size() - 1);
         for (uint vid : m.adj_p2v(pid)) {
             bool found = false;
-            double val = m.vert_data(vid).quality;
+            double val = DENOISE ? vert_ring_mean(m, field, vid) : m.vert_data(vid).quality;
             for (int lid = 0; lid < (int)isovals.size() - 1; ++lid) {
                 if (isovals.at(lid) <= val && val < isovals.at(lid + 1)) {
                     ++vert_labels.at(lid);
