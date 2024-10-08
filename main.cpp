@@ -13,7 +13,12 @@ int main(int argc, char *argv[]) {
     string pars_file = (argc == 2) ? argv[1] : string(HOME_PATH) + "parameters.run";
     Read_Parameters Par(pars_file);
     Par.read_file();
-    if (argc == 4) { // get mesh and fields from automatic routine
+    if (argc == 3) { // get mesh and fields from automatic Optimization routine
+        Par.set_MESH_PATH(argv[1]);
+        Par.set_FILTER_THRESH(atof(argv[2]));
+        Par.set_GUI(false);
+    }
+    if (argc == 4) { // get mesh and fields from automatic Liguria routine
         Par.set_MESH_PATH(argv[1]);
         Par.set_FIELD_PATH(argv[2]);
         Par.set_FGLOBAL(true);

@@ -136,19 +136,19 @@ void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int,
             }
         }
 
-        if (m.mesh_is_surface()) {
-            Polygonmesh<> *m_tmp = reinterpret_cast<Polygonmesh<>*>(&m);
-            Polygonmesh<> sub_m;
-            export_cluster(*m_tmp, l.first, sub_m);
-            double c = mesh_shape_coefficient(*m_tmp, sub_m);
-            shape_coeff_vec.push_back(c);
-        } else {
-            Polyhedralmesh<> *m_tmp = reinterpret_cast<Polyhedralmesh<>*>(&m);
-            Polyhedralmesh<> sub_m;
-            export_cluster(*m_tmp, l.first, sub_m);
-            double c = mesh_shape_coefficient(*m_tmp, sub_m);
-            shape_coeff_vec.push_back(c);
-        }
+        // if (m.mesh_is_surface()) {
+        //     Polygonmesh<> *m_tmp = reinterpret_cast<Polygonmesh<>*>(&m);
+        //     Polygonmesh<> sub_m;
+        //     export_cluster(*m_tmp, l.first, sub_m);
+        //     double c = mesh_shape_coefficient(*m_tmp, sub_m);
+        //     shape_coeff_vec.push_back(c);
+        // } else {
+        //     Polyhedralmesh<> *m_tmp = reinterpret_cast<Polyhedralmesh<>*>(&m);
+        //     Polyhedralmesh<> sub_m;
+        //     export_cluster(*m_tmp, l.first, sub_m);
+        //     double c = mesh_shape_coefficient(*m_tmp, sub_m);
+        //     shape_coeff_vec.push_back(c);
+        // }
 
         double misclass = 0.;
         for (uint pid : l.second) {
@@ -161,8 +161,6 @@ void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int,
             if (d > 0)
                 ++n_misclass_vec.back();
         }
-        // misclass /= iso_vec.back().second - iso_vec.back().first;
-        // misclass_vec.push_back(misclass > 0. ? 1./misclass : 0.);
         misclass_vec.push_back(misclass);
     }
     Prof.pop();
@@ -193,7 +191,7 @@ void Statistics::print_stats(AbstractMesh<M,E,V,P> &m, const std::string path) {
     fp << "STDEV: " << stdev_vec[i] << std::endl;
     fp << "MIN: " << minmax_vec[i].first << std::endl;
     fp << "MAX: " << minmax_vec[i].second << std::endl;
-    fp << "SHAPE: " << shape_coeff_vec[i] << std::endl;
+    // fp << "SHAPE: " << shape_coeff_vec[i] << std::endl;
     fp.precision(6);
     fp << "MISCLASSIFICATION: " << misclass_vec[i] << std::endl;
     fp.precision(0);
@@ -209,17 +207,28 @@ template<class M, class E, class V, class P> inline
 void Statistics::print_global_stats(AbstractMesh<M,E,V,P> &m, const double param, const std::string path) {
     std::ofstream fp(path.c_str());
     assert(fp.is_open());
-    fp << "# parameter, quality, misclassification, n_misclassification" << std::endl;
+    fp << "# parameter, n regions, misclassification, % misclassified, avg misclassification" << std::endl;
 
-    double q = std::accumulate(shape_coeff_vec.begin(), shape_coeff_vec.end(), 0.);
-    q /= shape_coeff_vec.size();
+    // double q = std::accumulate(shape_coeff_vec.begin(), shape_coeff_vec.end(), 0.);
+    // q /= shape_coeff_vec.size();
 
-    double c = std::accumulate(misclass_vec.begin(), misclass_vec.end(), 0.);
+    double regions = misclass_vec.size();
+
+    double misclass = std::accumulate(misclass_vec.begin(), misclass_vec.end(), 0.);
+    // misclass /= (isovals.back() - isovals.front());
+    // misclass /= misclass_vec.size();
+    // misclass = 1. / misclass;
 
     double n = std::accumulate(n_misclass_vec.begin(), n_misclass_vec.end(), 0.);
+
+    std::cout<<"n misclassified: "<<n<<std::endl;
+    std::cout<<"n percent: "<<n/m.num_polys()<<std::endl;
+    exit(0);
+
+    double avg_misclass = misclass / n;
     n /= m.num_polys();
 
-    fp << param << ", " << q << ", " << c << ", " << n << std::endl;
+    fp << param << ", " << regions << ", " << misclass << ", " << n << ", " << avg_misclass << std::endl;
     fp.close();
 }
 

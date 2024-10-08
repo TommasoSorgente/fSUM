@@ -163,10 +163,10 @@ double mesh_shape_coefficient(Polygonmesh<> &m, Polygonmesh<> &sub_m) {
     double area =sub_m.mesh_area();
     double entr = area / m.mesh_area();
 
-    double smoothness  = bbox_perimeter / perimeter;
     double compactness = sqrt(area) / perimeter;
-    double entropy     = entr * log(entr);
-    return (compactness + smoothness + entropy) / 1.;
+    double smoothness  = bbox_perimeter / perimeter;
+    double entropy     = -entr * log(entr);
+    return (compactness + smoothness + entropy) / 3.;
 }
 
 double mesh_shape_coefficient(Polyhedralmesh<> &m, Polyhedralmesh<> &sub_m) {
@@ -178,10 +178,10 @@ double mesh_shape_coefficient(Polyhedralmesh<> &m, Polyhedralmesh<> &sub_m) {
     double volume = sub_m.mesh_volume();
     double entr   = volume / m.mesh_volume();
 
-    double smoothness  = bbox_area / srf_area;
     double compactness = cbrt(volume) / srf_area;
+    double smoothness  = bbox_area / srf_area;
     double entropy     = entr * log(entr);
-    return (compactness + smoothness + entropy) / 1.;
+    return (compactness + smoothness + entropy) / 3.;
 }
 
 /**********************************************************************/
