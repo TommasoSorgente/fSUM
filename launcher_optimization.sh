@@ -1,8 +1,8 @@
 #!/bin/bash
 
 data_folder="data/Liguria_grid/"
-FESA="build/Qt_6_7_2_for_macOS-Release/FESA"
-#FESA="build/Desktop_Qt_6_7_2-Release/FESA"
+FESA="build/Qt_6_8_0_for_macOS-Release/FESA"
+#FESA="build/Desktop_Qt_6_8_0-Release/FESA"
 
 region=("11_FSASSELLO")
 threshold=(0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0)

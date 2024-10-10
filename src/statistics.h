@@ -223,7 +223,7 @@ void Statistics::print_global_stats(AbstractMesh<M,E,V,P> &m, const double param
 
     std::cout<<"n misclassified: "<<n<<std::endl;
     std::cout<<"n percent: "<<n/m.num_polys()<<std::endl;
-    exit(0);
+    // exit(0);
 
     double avg_misclass = misclass / n;
     n /= m.num_polys();

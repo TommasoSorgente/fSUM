@@ -1,8 +1,8 @@
 #!/bin/bash
 
 data_folder="data/Liguria_grid/"
-FESA="build/Qt_6_7_2_for_macOS-Release/FESA"
-#FESA="build/Desktop_Qt_6_7_2-Release/FESA"
+FESA="build/Qt_6_8_0_for_macOS-Release/FESA"
+#FESA="build/Desktop_Qt_6_8_0-Release/FESA"
 
 regions=("1_F5TERRE" 
 	 "2_FMAGRA" 
