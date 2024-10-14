@@ -1,11 +1,11 @@
 #!/bin/bash
 
-data_folder="data/Liguria_grid/"
+data_folder="data/Liguria_tri/"
 FESA="build/Qt_6_8_0_for_macOS-Release/FESA"
 #FESA="build/Desktop_Qt_6_8_0-Release/FESA"
 
 region=("11_FSASSELLO")
-threshold=(0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 1.1 1.2 1.3 1.4 1.5 1.6 1.7 1.8 1.9 2.0)
+threshold=($(seq 0.0 0.01 1.0))
 
 src="./out/"$region"/global_stats.txt"
 dst="./out/optimization/"$region"_global_stats.txt"
@@ -19,7 +19,7 @@ fi
 head -n 1 $src > $dst
 
 for t in ${threshold[@]}; do
-    mesh=$data_folder$region"/mesh_grid.obj"
+    mesh=$data_folder$region"/mesh_tri.obj"
     echo $FESA $mesh $t
     #
     ./$FESA $mesh $t

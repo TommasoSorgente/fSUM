@@ -3,6 +3,7 @@
 #include <cinolib/drawable_isosurface.h>
 #include <cinolib/gl/surface_mesh_controls.h>
 #include <cinolib/gl/volume_mesh_controls.h>
+#include <cinolib/meshes/mesh_attributes.h>
 
 #include "src/contoured_mesh.h"
 #include "src/read_parameters.h"
@@ -32,7 +33,7 @@ int main(int argc, char *argv[]) {
 
     switch (Par.get_DIM()) {
     case 2: {
-        DrawablePolygonmesh<> m;
+        DrawablePolygonmesh<M,VD,E,PD> m;
         FESA.init(m, Par);
         FESA.segment(m, Par);
         if (Par.get_FILTER())  FESA.filter(m, Par);
@@ -45,11 +46,13 @@ int main(int argc, char *argv[]) {
         int n_labels = Par.get_N_REGIONS() - 1;
         for(uint pid=0; pid<m.num_polys(); ++pid) {
             float c = (float)m.poly_data(pid).label / n_labels;
-            // m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
+            m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
         }
         // m.poly_color_wrt_label(false);
         m.show_poly_color();
-        mark_edges(m);
+        // mark_edges(m);
+        // m.show_marked_edge_width(10.);
+        m.show_marked_edge_color(Color::BLACK());
         m.updateGL();
 
         GLcanvas gui(1000, 1000);
@@ -58,14 +61,14 @@ int main(int argc, char *argv[]) {
         if (Par.get_ISOCONTOURS()) {
             std::vector<double> isovalues = FESA.isovals;
             for (uint i=0; i<isovalues.size(); ++i) {
-                DrawableIsocontour<> *contour = new DrawableIsocontour<>(m, isovalues.at(i));
-                contour->thickness = 30000; // 700;
+                DrawableIsocontour<M,VD,E,PD> *contour = new DrawableIsocontour<M,VD,E,PD>(m, isovalues.at(i));
+                contour->thickness = 30000; //700;
                 contour->color = Color::BLACK(); //parula_ramp(isovalues.size(), i);
                 gui.push(contour);
             }
         }
 
-        bool MISCLASS = false;
+        bool MISCLASS = true;
         if (MISCLASS) {
             std::string misclass_path = FESA.output_path + "/misclassifications.csv";
             std::ifstream fp(misclass_path.c_str());
@@ -82,12 +85,12 @@ int main(int argc, char *argv[]) {
                 std::stringstream ss(line);
                 ss >> pid >> d >> c.x() >> d >> c.y() >> d >> c.z() >> d >> f >>
                       d >> l_min >> d >> l_max >> d >> s_min >> d >> s_max >> d >> misclass;
-                gui.push_marker(c, "", Color::BLACK(), 2.);
+                gui.push_marker(c, "", Color::GREEN(), 3.);
             }
             fp.close();
         }
 
-        SurfaceMeshControls<DrawablePolygonmesh<>> menu(&m, &gui);
+        SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>> menu(&m, &gui);
         gui.push(&menu);
         // gui.camera.rotate_x(-90);
         // gui.update_GL_matrices();
@@ -95,7 +98,7 @@ int main(int argc, char *argv[]) {
         break;
     }
     case 3: {
-        DrawablePolyhedralmesh<> m;
+        DrawablePolyhedralmesh<M,VD,E,F,PD> m;
         FESA.init(m, Par);
         FESA.segment(m, Par);
         if (Par.get_FILTER())  FESA.filter(m, Par);
@@ -119,7 +122,7 @@ int main(int argc, char *argv[]) {
 
         if (Par.get_ISOCONTOURS()) assert(false && "show_iso not working for 3D meshes!");
 
-        VolumeMeshControls<DrawablePolyhedralmesh<>> menu(&m, &gui);
+        VolumeMeshControls<DrawablePolyhedralmesh<M,VD,E,F,PD>> menu(&m, &gui);
         gui.push(&menu);
         gui.launch();
         break;

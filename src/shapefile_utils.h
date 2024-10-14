@@ -17,9 +17,10 @@ using namespace cinolib;
 /**********************************************************************/
 
 /* extract the ordered sequence of vertices along the boundary of the region with label *label* */
-void extract_region(Polygonmesh<> &m, const uint label,
+template<class M, class V, class E, class P> inline
+void extract_region(Polygonmesh<M,V,E,P> &m, const uint label,
                     std::vector<std::vector<uint>> &verts) {
-    Polygonmesh<> sub_m;
+    Polygonmesh<M,V,E,P> sub_m;
     std::unordered_map<uint,uint> m2subm_vmap;
     std::unordered_map<uint,uint> subm2m_vmap;
     export_cluster(m, label, sub_m, m2subm_vmap, subm2m_vmap);
@@ -124,7 +125,8 @@ void shp_poly_add_vert(const vec3d &v, uint &count, std::vector<double> &x, std:
 /**********************************************************************/
 
 /* print the vertices of the regions on separate shapefiles */
-void print_regions_shp(Polygonmesh<> &m, const Statistics &stats,
+template<class M, class V, class E, class P> inline
+void print_regions_shp(Polygonmesh<M,V,E,P> &m, const Statistics &stats,
                        const std::unordered_map<int, std::vector<uint>> &polys_in_region,
                        const std::string filename, Profiler Prof) {
     Prof.push("Print Region Shapefiles");

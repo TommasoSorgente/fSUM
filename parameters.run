@@ -1,7 +1,7 @@
 ## PARAMETERS FILE
-dim           2
-mesh_path     data/Liguria_tri/11_FSASSELLO/mesh_tri.obj
-field_path    data/Liguria_tri/11_FSASSELLO/cr_mean.csv
+dim           3
+mesh_path     data/porto/mesh.vtk
+field_path    data/porto/DO_mgl_mean.csv
 field_type    1
 FGLOBAL       0
 fieldG_path   data/Liguria_tri/cr_mean_global.csv

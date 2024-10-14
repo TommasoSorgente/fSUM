@@ -8,14 +8,14 @@
 using namespace cinolib;
 
 /* is the variance of the field among the cells in *polys* smaller than threshold? */
-template<class M, class E, class V, class P> inline
-double CRIT_variance(const AbstractMesh<M,E,V,P> &m,
+template<class M, class V, class E, class P> inline
+double CRIT_variance(const AbstractMesh<M,V,E,P> &m,
                      const std::vector<uint> &polys, const double THRESH)
 {
     double sum = 0.;
     std::unordered_set<double> field;
     for (uint pid : polys) {
-        double f = m.poly_data(pid).quality;
+        double f = m.poly_data(pid).fvalue;
         field.insert(f);
         sum += f;
     }
@@ -32,8 +32,8 @@ double CRIT_variance(const AbstractMesh<M,E,V,P> &m,
 /**********************************************************************/
 
 /* is the mass (area or volume) covered by the cells in *polys* smaller than threshold? */
-template<class M, class E, class V, class P> inline
-bool CRIT_mass(const AbstractMesh<M,E,V,P> &m, const std::vector<uint> &polys, const double THRESH)
+template<class M, class V, class E, class P> inline
+bool CRIT_mass(const AbstractMesh<M,V,E,P> &m, const std::vector<uint> &polys, const double THRESH)
 {
     double mass = 0.;
     for (uint pid : polys) {
@@ -48,7 +48,8 @@ bool CRIT_mass(const AbstractMesh<M,E,V,P> &m, const std::vector<uint> &polys, c
 
 /* is the shape ratio of the mesh smaller than threshold?
  * (shape ratio is defined to reach 1 on the circle and the sphere) */
-bool CRIT_shape(const Polygonmesh<> &mesh, const double THRESH)
+template<class M, class V, class E, class P> inline
+bool CRIT_shape(const Polygonmesh<M,V,E,P> &mesh, const double THRESH)
 {
     double area = mesh.mesh_area();
     double perimeter = 0.;
@@ -62,13 +63,15 @@ bool CRIT_shape(const Polygonmesh<> &mesh, const double THRESH)
     return (shape_ratio < THRESH);
 }
 
-bool CRIT_shape(const Trimesh<> &_mesh, const double THRESH)
+template<class M, class V, class E, class P> inline
+bool CRIT_shape(const Trimesh<M,V,E,P> &_mesh, const double THRESH)
 {
-    Polygonmesh<> mesh(_mesh.vector_verts(), _mesh.vector_polys());
+    Polygonmesh<M,V,E,P> mesh(_mesh.vector_verts(), _mesh.vector_polys());
     return CRIT_shape(mesh, THRESH);
 }
 
-bool CRIT_shape(const Polyhedralmesh<> &mesh, const double THRESH)
+template<class M, class V, class E, class P> inline
+bool CRIT_shape(const Polyhedralmesh<M,V,E,P> &mesh, const double THRESH)
 {
     double volume = mesh.mesh_volume();
     double srf_area = mesh.mesh_srf_area();
@@ -77,14 +80,15 @@ bool CRIT_shape(const Polyhedralmesh<> &mesh, const double THRESH)
     return (shape_ratio < THRESH);
 }
 
-bool CRIT_shape(const Tetmesh<> &_mesh, const double THRESH)
+template<class M, class V, class E, class P> inline
+bool CRIT_shape(const Tetmesh<M,V,E,P> &_mesh, const double THRESH)
 {
     std::vector<std::vector<bool>> windings(_mesh.num_polys());
     for (uint pid = 0; pid < _mesh.num_polys(); ++pid) {
         std::vector<bool> w(_mesh.faces_per_poly(pid), true);
         windings.at(pid) = w;
     }
-    Polyhedralmesh<> mesh(_mesh.vector_verts(), _mesh.vector_faces(), _mesh.vector_polys(), windings);
+    Polyhedralmesh<M,V,E,P> mesh(_mesh.vector_verts(), _mesh.vector_faces(), _mesh.vector_polys(), windings);
     return CRIT_shape(mesh, THRESH);
 }
 

@@ -7,6 +7,7 @@
 #include <cinolib/gl/glcanvas.h>
 #include <cinolib/gl/surface_mesh_controls.h>
 
+#include "../src/contoured_mesh_attributes.h"
 #include "../src/read_parameters.h"
 #include "../src/statistics.h"
 #include "../src/auxiliary.h"
@@ -62,7 +63,8 @@ void compute_isovals(const std::vector<double> &global_field, const uint n_label
     assert((int)isovals.size() == n_labels+1 && "#isovalues != #regions+1");
 }
 
-void load_cells_data(const string filepath, Polygonmesh<> &m) {
+template<class M, class V, class E, class P> inline
+void load_cells_data(const string filepath, Polygonmesh<M,V,E,P> &m) {
     std::ifstream file(filepath);
     if (!file.is_open()) {
         std::cerr << "Could not open the file " << filepath << std::endl;
@@ -83,7 +85,7 @@ void load_cells_data(const string filepath, Polygonmesh<> &m) {
         uint pid = std::stoi(cell_id_str);
         int l    = std::stod(label1_str);
         double f = std::stod(field_str);
-        m.poly_data(pid).quality = f;
+        m.poly_data(pid).fvalue = f;
         m.poly_data(pid).label = l;
     }
     file.close();
@@ -98,22 +100,22 @@ int main(int argc, char *argv[])
     Par.read_file();
 
     std::vector<std::string> domains{
-                                     "1_F5TERRE",
-                                     "2_FMAGRA",
-                                     "3_FPETRONIO",
-                                     "4_FPORTOFINO",
-                                     "5_FENTELLA",
-                                     "6_FAVETO",
-                                     "7_FPADANO",
-                                     "8_FBISAGNO",
-                                     "9_FPOLCEVERA",
+                                     // "1_F5TERRE",
+                                     // "2_FMAGRA",
+                                     // "3_FPETRONIO",
+                                     // "4_FPORTOFINO",
+                                     // "5_FENTELLA",
+                                     // "6_FAVETO",
+                                     // "7_FPADANO",
+                                     // "8_FBISAGNO",
+                                     // "9_FPOLCEVERA",
                                      "10_FARENZANO",
                                      "11_FSASSELLO",
-                                     "12_FBORMIDE",
-                                     "13_FSAVONESE",
-                                     "14_FIMPERIESE"
+                                     // "12_FBORMIDE",
+                                     // "13_FSAVONESE",
+                                     // "14_FIMPERIESE"
                                     };
-    std::string field_path = std::string(HOME_PATH) + "../data/Liguria_grid/cr_mean_global.csv";
+    std::string field_path = std::string(HOME_PATH) + "../data/Liguria_tri/cr_mean_global.csv";
 
     std::vector<double> global_field;
     std::ifstream fp(field_path);
@@ -132,7 +134,7 @@ int main(int argc, char *argv[])
     GLcanvas *gui = new GLcanvas(1000, 1000);
 
     // SHOW THE SCALAR FIELD OVER THE WHOLE DOMAIN
-    // DrawablePolygonmesh<> m((std::string(HOME_PATH) + "../data/Liguria_grid/Liguria.obj").c_str());
+    // DrawablePolygonmesh<M,VD,E,PD> m((std::string(HOME_PATH) + "../data/Liguria_tri/mesh_global_tri.obj").c_str());
     // auto minmax = minmax_element(global_field.begin(), global_field.end());
     // double field_min = *minmax.first;
     // double field_max = *minmax.second;
@@ -143,14 +145,14 @@ int main(int argc, char *argv[])
     // m.show_poly_color();
     // m.show_wireframe(false);
     // gui->push(&m);
-    // SurfaceMeshControls<DrawablePolygonmesh<>> menu(&m, gui);
+    // SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>> menu(&m, gui);
     // gui->push(&menu);
     // gui->launch();
     // return 0;
 
     for (uint label=0; label<n_labels; ++label) {
         prof.push("Processed label " + std::to_string(label));
-        DrawablePolygonmesh<> *m = new DrawablePolygonmesh<>;
+        DrawablePolygonmesh<M,VD,E,PD> *m = new DrawablePolygonmesh<M,VD,E,PD>;
         uint count = 0;
         for (uint dom=0; dom<domains.size(); ++dom) {
             std::string base_path = std::string(HOME_PATH) + "../out/" + domains.at(dom) + "/regions/";
@@ -161,21 +163,20 @@ int main(int argc, char *argv[])
                 std::cout << "Domain " << domain << " does not contain label " << label << std::endl;
                 continue;
             }
-            DrawablePolygonmesh<> *m_local = new DrawablePolygonmesh<>(domain.c_str());
+            DrawablePolygonmesh<M,VD,E,PD> *m_local = new DrawablePolygonmesh<M,VD,E,PD>(domain.c_str());
             std::string cells_data = base_path + "region_" + std::to_string(label) + "_cells_data.csv";
-            load_cells_data(cells_data, *m_local); // load field value (quality) and label of each cell
+            load_cells_data(cells_data, *m_local); // load field value (fvalue) and label of each cell
 
             // merge *m* with *m_local*, obtaining *res*
-            DrawablePolygonmesh<> *m_merge = new DrawablePolygonmesh<>;
+            DrawablePolygonmesh<M,VD,E,PD> *m_merge = new DrawablePolygonmesh<M,VD,E,PD>;
             merge_meshes_at_coincident_vertices(*m, *m_local, *m_merge);
             for (uint pid=0; pid<m->num_polys(); ++pid) {
                 m_merge->poly_data(pid) = m->poly_data(pid);
             }
-            int offset = m->num_polys();
+            int poly_offset = m->num_polys();
             for (uint pid=0; pid<m_local->num_polys(); ++pid) {
-                m_merge->poly_data(offset + pid) = m_local->poly_data(pid);
+                m_merge->poly_data(poly_offset + pid) = m_local->poly_data(pid);
             }
-
             // update m
             m = m_merge;
             ++count;
@@ -214,10 +215,11 @@ int main(int argc, char *argv[])
                 m->poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
             }
             // m->poly_color_wrt_label(false);
-            m->show_wireframe(false);
+            m->show_wireframe_transparency(0.2f);
+            m->show_marked_edge_color(Color::BLACK());
             m->updateGL();
             gui->push(m);
-            SurfaceMeshControls<DrawablePolygonmesh<>> *menu = new SurfaceMeshControls<DrawablePolygonmesh<>>(m, gui);
+            SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>> *menu = new SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>>(m, gui);
             gui->push(menu);
         }
         std::cout << std::endl;

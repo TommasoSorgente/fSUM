@@ -51,8 +51,8 @@ double inv_percentile(const std::vector<double> &data, const double isovalue)
 /**********************************************************************/
 
 // compute the mean value of *field* in the 1-ring of poly *pid*
-template<class M, class E, class V, class P> inline
-double poly_ring_mean(AbstractMesh<M,E,V,P> &m, std::map<uint,double> &field, const uint pid)
+template<class M, class V, class E, class P> inline
+double poly_ring_mean(AbstractMesh<M,V,E,P> &m, std::map<uint,double> &field, const uint pid)
 {
     std::vector<uint> ring;
     for (uint vid : m.adj_p2v(pid)) {
@@ -69,8 +69,8 @@ double poly_ring_mean(AbstractMesh<M,E,V,P> &m, std::map<uint,double> &field, co
 }
 
 // compute the mean value of *field* in the 1-ring of vertex *vid*
-template<class M, class E, class V, class P> inline
-double vert_ring_mean(AbstractMesh<M,E,V,P> &m, std::map<uint,double> &field, const uint vid)
+template<class M, class V, class E, class P> inline
+double vert_ring_mean(AbstractMesh<M,V,E,P> &m, std::map<uint,double> &field, const uint vid)
 {
     std::vector<double> ring_values;
     for (uint pid : m.adj_v2p(vid)) {
@@ -83,11 +83,11 @@ double vert_ring_mean(AbstractMesh<M,E,V,P> &m, std::map<uint,double> &field, co
 /**********************************************************************/
 
 /* mark edges or faces among cells with different labels */
-template<class M, class E, class V, class P> inline
-void mark_edges(AbstractMesh<M,E,V,P> &m)
+template<class M, class V, class E, class P> inline
+void mark_edges(AbstractMesh<M,V,E,P> &m)
 {
     for (uint eid=0; eid<m.num_edges(); ++eid) {
-        m.edge_data(eid).flags[MARKED] = false;
+        // m.edge_data(eid).flags[MARKED] = false;
         std::vector<uint> polys = m.adj_e2p(eid);
         if (m.poly_data(polys.front()).label != m.poly_data(polys.back()).label) {
             m.edge_data(eid).flags[MARKED] = true;
@@ -95,7 +95,8 @@ void mark_edges(AbstractMesh<M,E,V,P> &m)
     }
 }
 
-void mark_faces(Polyhedralmesh<> &m)
+template<class M, class E, class V, class F, class P> inline
+void mark_faces(Polyhedralmesh<M,E,V,F,P> &m)
 {
     for (uint fid=0; fid<m.num_faces(); ++fid) {
         m.face_data(fid).flags[MARKED] = false;
@@ -116,8 +117,8 @@ void mark_faces(Polyhedralmesh<> &m)
 /**********************************************************************/
 
 /* create a map <label, all polys with that label> */
-template<class M, class E, class V, class P> inline
-void update_regions_map(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> &map)
+template<class M, class V, class E, class P> inline
+void update_regions_map(AbstractMesh<M,V,E,P> &m, std::unordered_map<int, std::vector<uint>> &map)
 {
     map.clear();
     for (uint pid = 0; pid < m.num_polys(); ++pid) {
@@ -126,8 +127,8 @@ void update_regions_map(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::v
 }
 
 /* apply the labels in *map* to the mesh elements */
-template<class M, class E, class V, class P> inline
-void apply_labels_to_mesh(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> &map)
+template<class M, class V, class E, class P> inline
+void apply_labels_to_mesh(AbstractMesh<M,V,E,P> &m, std::unordered_map<int, std::vector<uint>> &map)
 {
     for (auto l : map) {
         for (uint pid : l.second) {
@@ -138,10 +139,10 @@ void apply_labels_to_mesh(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std:
 
 /**********************************************************************/
 
-template<class M, class E, class V, class P> inline
-double poly_misclassification(AbstractMesh<M,E,V,P> &m, const uint pid, const std::pair<double,double> &isovals, const std::pair<double,double> &sigma)
+template<class M, class V, class E, class P> inline
+double poly_misclassification(AbstractMesh<M,V,E,P> &m, const uint pid, const std::pair<double,double> &isovals, const std::pair<double,double> &sigma)
 {
-    double f = m.poly_data(pid).quality;
+    double f = m.poly_data(pid).fvalue;
     if (sigma.second < isovals.first) {
         return isovals.first - f;
     }
@@ -153,7 +154,8 @@ double poly_misclassification(AbstractMesh<M,E,V,P> &m, const uint pid, const st
 
 /**********************************************************************/
 
-double mesh_shape_coefficient(Polygonmesh<> &m, Polygonmesh<> &sub_m) {
+template<class M, class V, class E, class P> inline
+double mesh_shape_coefficient(Polygonmesh<M,V,E,P> &m, Polygonmesh<M,V,E,P> &sub_m) {
     double perimeter = 0.;
     for (std::pair<uint,uint> e : sub_m.get_boundary_edges()) {
         perimeter += sub_m.vert(e.first).dist(sub_m.vert(e.second));
@@ -169,7 +171,8 @@ double mesh_shape_coefficient(Polygonmesh<> &m, Polygonmesh<> &sub_m) {
     return (compactness + smoothness + entropy) / 3.;
 }
 
-double mesh_shape_coefficient(Polyhedralmesh<> &m, Polyhedralmesh<> &sub_m) {
+template<class M, class E, class V, class F, class P> inline
+double mesh_shape_coefficient(Polyhedralmesh<M,E,V,F,P> &m, Polyhedralmesh<M,V,E,P> &sub_m) {
     double srf_area = sub_m.mesh_srf_area();
     AABB bbox = sub_m.bbox();
     double bbox_area = 2. * (bbox.delta_x() * bbox.delta_y() +
@@ -211,8 +214,8 @@ void open_directory(const std::string &path, bool erase = true) {
 /**********************************************************************/
 
 /* print scalar field */
-template<class M, class E, class V, class P> inline
-void print_field_csv(AbstractMesh<M,E,V,P> &m, const std::string filename, Profiler Prof) {
+template<class M, class V, class E, class P> inline
+void print_field_csv(AbstractMesh<M,V,E,P> &m, const std::string filename, Profiler Prof) {
     Prof.push("Print Field");
     std::ofstream fp(filename.c_str());
     assert(fp.is_open());
@@ -224,7 +227,7 @@ void print_field_csv(AbstractMesh<M,E,V,P> &m, const std::string filename, Profi
         fp.precision(2);
         fp << c.x() << ", " << c.y() << ", " << c.z() << ", ";
         fp.precision(6);
-        fp << m.poly_data(pid).quality << std::endl;
+        fp << m.poly_data(pid).fvalue << std::endl;
     }
     fp.close();
     Prof.pop();
@@ -233,8 +236,8 @@ void print_field_csv(AbstractMesh<M,E,V,P> &m, const std::string filename, Profi
 /**********************************************************************/
 
 /* print misclassifications */
-template<class M, class E, class V, class P> inline
-void print_misclassifications(AbstractMesh<M,E,V,P> &m, const std::vector<double> &isovals,
+template<class M, class V, class E, class P> inline
+void print_misclassifications(AbstractMesh<M,V,E,P> &m, const std::vector<double> &isovals,
                               const std::unordered_map<int, int> &subregion_region_map,
                               const std::string filename, Profiler Prof) {
     Prof.push("Print Misclassifications");
@@ -257,7 +260,7 @@ void print_misclassifications(AbstractMesh<M,E,V,P> &m, const std::vector<double
             fp.precision(2);
             fp << pid << ", " << c.x() << ", " << c.y() << ", " << c.z() << ", ";
             fp.precision(6);
-            fp << m.poly_data(pid).quality << ", " << iso_min << ", " << iso_max << ", " << misclass << std::endl;
+            fp << m.poly_data(pid).fvalue << ", " << iso_min << ", " << iso_max << ", " << misclass << std::endl;
         }
     }
     fp.close();
@@ -267,8 +270,8 @@ void print_misclassifications(AbstractMesh<M,E,V,P> &m, const std::vector<double
 /**********************************************************************/
 
 /* print isovalues info */
-template<class M, class E, class V, class P> inline
-void print_isovals_csv(AbstractMesh<M,E,V,P> &m, const std::vector<double> &percentiles, const std::vector<double> &isovals, const std::string filename, Profiler Prof) {
+template<class M, class V, class E, class P> inline
+void print_isovals_csv(AbstractMesh<M,V,E,P> &m, const std::vector<double> &percentiles, const std::vector<double> &isovals, const std::string filename, Profiler Prof) {
     Prof.push("Print Isovalues");
     std::ofstream fp(filename.c_str());
     assert(fp.is_open());
@@ -289,8 +292,8 @@ void print_isovals_csv(AbstractMesh<M,E,V,P> &m, const std::vector<double> &perc
 /**********************************************************************/
 
 /* print the vertices of the regions on separate csv files */
-template<class M, class E, class V, class P> inline
-void print_verts_csv(AbstractMesh<M,E,V,P> &m, const std::string filename, Profiler Prof) {
+template<class M, class V, class E, class P> inline
+void print_verts_csv(AbstractMesh<M,V,E,P> &m, const std::string filename, Profiler Prof) {
     Prof.push("Print Region Vertices");
     std::ofstream fp(filename.c_str());
     assert(fp.is_open());
@@ -302,7 +305,7 @@ void print_verts_csv(AbstractMesh<M,E,V,P> &m, const std::string filename, Profi
         fp.precision(2);
         fp << vid << ", " << v.x() << ", " << v.y() << ", " << v.z() << ", ";
         fp.precision(6);
-        fp << m.vert_data(vid).quality << std::endl;
+        fp << m.vert_data(vid).fvalue << std::endl;
     }
     fp.close();
     Prof.pop();
@@ -311,8 +314,8 @@ void print_verts_csv(AbstractMesh<M,E,V,P> &m, const std::string filename, Profi
 /**********************************************************************/
 
 /* print the cells of the regions on separate csv files */
-template<class M, class E, class V, class P> inline
-void print_cells_csv(AbstractMesh<M,E,V,P> &m, const std::unordered_map<int, int> &subregion_region_map,
+template<class M, class V, class E, class P> inline
+void print_cells_csv(AbstractMesh<M,V,E,P> &m, const std::unordered_map<int, int> &subregion_region_map,
                      const std::string filename, Profiler Prof) {
     Prof.push("Print Region Cells");
     std::ofstream fp(filename.c_str());
@@ -329,7 +332,7 @@ void print_cells_csv(AbstractMesh<M,E,V,P> &m, const std::unordered_map<int, int
         fp << pid << ", " << c.x() << ", " << c.y() << ", " << c.z()
            << ", " << old_label << ", " << tmp_label << ", ";
         fp.precision(6);
-        fp << m.poly_data(pid).quality << std::endl;
+        fp << m.poly_data(pid).fvalue << std::endl;
     }
     fp.close();
     Prof.pop();
@@ -338,14 +341,15 @@ void print_cells_csv(AbstractMesh<M,E,V,P> &m, const std::unordered_map<int, int
 /**********************************************************************/
 
 /* print the regions as separate meshes, grouped for label */
-void print_regions(Polygonmesh<> &m, const std::unordered_map<int, int> &subregion_region_map, std::unordered_map<int, std::vector<uint>> polys_in_region,
+template<class M, class V, class E, class P> inline
+void print_regions(Polygonmesh<M,V,E,P> &m, const std::unordered_map<int, int> &subregion_region_map, std::unordered_map<int, std::vector<uint>> polys_in_region,
 Statistics &stats, const std::string base_path, Profiler Prof) {
     Prof.push("Print Region Meshes");
     open_directory(base_path);
 
     for (auto l : polys_in_region) {        
         // extract the mesh containing only the cells with label *l*
-        Polygonmesh<> sub_m;
+        Polygonmesh<M,V,E,P> sub_m;
         std::unordered_map<uint,uint> m2subm_vmap, subm2m_vmap;
         export_cluster(m, l.first, sub_m, m2subm_vmap, subm2m_vmap);
         if (sub_m.num_polys() == 0)
@@ -378,14 +382,15 @@ Statistics &stats, const std::string base_path, Profiler Prof) {
 }
 
 /* print the regions as separate meshes, grouped for label */
-void print_regions(Polyhedralmesh<> &m, const std::unordered_map<int, int> &subregion_region_map, std::unordered_map<int, std::vector<uint>> polys_in_region,
+template<class M, class E, class V, class F, class P> inline
+void print_regions(Polyhedralmesh<M,E,V,F,P> &m, const std::unordered_map<int, int> &subregion_region_map, std::unordered_map<int, std::vector<uint>> polys_in_region,
                    Statistics &stats, const std::string base_path, Profiler Prof) {
     Prof.push("Print Region Meshes");
     open_directory(base_path);
 
     for (auto l : polys_in_region) {
         // extract the mesh containing only the cells with label *l*
-        Polyhedralmesh<> sub_m;
+        Polyhedralmesh<M,E,V,F,P> sub_m;
         std::unordered_map<uint,uint> m2subm_vmap, subm2m_vmap;
         export_cluster(m, l.first, sub_m, m2subm_vmap, subm2m_vmap);
         if (sub_m.num_polys() == 0)
@@ -444,8 +449,8 @@ void print_regions(Polyhedralmesh<> &m, const std::unordered_map<int, int> &subr
 /**********************************************************************/
 
 /* print the cell labels in a csv file */
-template<class M, class E, class V, class P> inline
-void print_labels(AbstractMesh<M,E,V,P> &m, const std::string output_path)
+template<class M, class V, class E, class P> inline
+void print_labels(AbstractMesh<M,V,E,P> &m, const std::string output_path)
 {
     std::string labels_path = output_path + "/labels.csv";
     std::ofstream fp(labels_path.c_str());
@@ -460,8 +465,8 @@ void print_labels(AbstractMesh<M,E,V,P> &m, const std::string output_path)
 /**********************************************************************/
 
 /* save the final mesh */
-template<class M, class E, class V, class P> inline
-void save_mesh(AbstractMesh<M,E,V,P> &m,
+template<class M, class V, class E, class P> inline
+void save_mesh(AbstractMesh<M,V,E,P> &m,
                const std::string output_path, const std::string MESH_FORMAT)
 {
     if (MESH_FORMAT == "-") {

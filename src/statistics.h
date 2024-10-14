@@ -45,17 +45,17 @@ public:
 
   void clear_stats();
 
-  template<class M, class E, class V, class P> inline
-  void compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> map);
+  template<class M, class V, class E, class P> inline
+  void compute_stats(AbstractMesh<M,V,E,P> &m, std::unordered_map<int, std::vector<uint>> map);
 
-  template<class M, class E, class V, class P> inline
-  void print_stats(AbstractMesh<M,E,V,P> &m, const std::string path);
+  template<class M, class V, class E, class P> inline
+  void print_stats(AbstractMesh<M,V,E,P> &m, const std::string path);
 
-  template<class M, class E, class V, class P> inline
-  void print_global_stats(AbstractMesh<M,E,V,P> &m, const double param, const std::string path);
+  template<class M, class V, class E, class P> inline
+  void print_global_stats(AbstractMesh<M,V,E,P> &m, const double param, const std::string path);
 
-  template<class M, class E, class V, class P> inline
-  void print_misclassification(AbstractMesh<M,E,V,P> &m, const std::string path);
+  template<class M, class V, class E, class P> inline
+  void print_misclassification(AbstractMesh<M,V,E,P> &m, const std::string path);
 
   // vectors for storing information about each region:
   std::vector<int> label_vec;    // label of the region
@@ -93,8 +93,8 @@ void Statistics::clear_stats() {
 
 /**********************************************************************/
 
-template<class M, class E, class V, class P> inline
-void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int, std::vector<uint>> map) {
+template<class M, class V, class E, class P> inline
+void Statistics::compute_stats(AbstractMesh<M,V,E,P> &m, std::unordered_map<int, std::vector<uint>> map) {
     Prof.push("Compute Statistics");
 
     polys_in_region = map;
@@ -110,7 +110,7 @@ void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int,
         double mean = 0., sqmean = 0., stdev = 0., size = 0.;
         double fmin = DBL_MAX, fmax = DBL_MIN;
         for (uint pid : l.second) {
-            double val = m.poly_data(pid).quality;
+            double val = m.poly_data(pid).fvalue;
             mean += val;
             sqmean += val * val;
             size += m.poly_mass(pid);
@@ -125,7 +125,7 @@ void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int,
         size_vec.push_back(size);
         minmax_vec.push_back(std::pair<double, double>(fmin, fmax));
 
-        double val = mean; //m.poly_data(cid).quality;
+        double val = mean; //m.poly_data(cid).fvalue;
         for (uint lid = 0; lid < isovals.size() - 1; ++lid) {
             if (isovals.at(lid) <= val && val <= isovals.at(lid + 1)) {
                 perc_vec.push_back(std::pair<double, double>(percvals.at(lid),
@@ -137,14 +137,14 @@ void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int,
         }
 
         // if (m.mesh_is_surface()) {
-        //     Polygonmesh<> *m_tmp = reinterpret_cast<Polygonmesh<>*>(&m);
-        //     Polygonmesh<> sub_m;
+        //     Polygonmesh<M,V,E,P> *m_tmp = reinterpret_cast<Polygonmesh<M,V,E,P>*>(&m);
+        //     Polygonmesh<M,V,E,P> sub_m;
         //     export_cluster(*m_tmp, l.first, sub_m);
         //     double c = mesh_shape_coefficient(*m_tmp, sub_m);
         //     shape_coeff_vec.push_back(c);
         // } else {
-        //     Polyhedralmesh<> *m_tmp = reinterpret_cast<Polyhedralmesh<>*>(&m);
-        //     Polyhedralmesh<> sub_m;
+        //     Polyhedralmesh<M,V,E,P> *m_tmp = reinterpret_cast<Polyhedralmesh<M,E,V,F,P>*>(&m);
+        //     Polyhedralmesh<M,E,V,F,P> sub_m;
         //     export_cluster(*m_tmp, l.first, sub_m);
         //     double c = mesh_shape_coefficient(*m_tmp, sub_m);
         //     shape_coeff_vec.push_back(c);
@@ -152,7 +152,7 @@ void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int,
 
         double misclass = 0.;
         for (uint pid : l.second) {
-            std::pair<double,double> sigma = {m.poly_data(pid).quality, m.poly_data(pid).quality};
+            std::pair<double,double> sigma = {m.poly_data(pid).fvalue, m.poly_data(pid).fvalue};
             if (field_m_sigma.size() > 0 && field_p_sigma.size() > 0) {
                 sigma = {field_m_sigma[pid], field_p_sigma[pid]};
             }
@@ -168,8 +168,8 @@ void Statistics::compute_stats(AbstractMesh<M,E,V,P> &m, std::unordered_map<int,
 
 /**********************************************************************/
 
-template<class M, class E, class V, class P> inline
-void Statistics::print_stats(AbstractMesh<M,E,V,P> &m, const std::string path) {
+template<class M, class V, class E, class P> inline
+void Statistics::print_stats(AbstractMesh<M,V,E,P> &m, const std::string path) {
   Prof.push("Print Statistics");
 
   for (uint i = 0; i < polys_in_region.size(); ++i) {
@@ -203,8 +203,8 @@ void Statistics::print_stats(AbstractMesh<M,E,V,P> &m, const std::string path) {
 
 /**********************************************************************/
 
-template<class M, class E, class V, class P> inline
-void Statistics::print_global_stats(AbstractMesh<M,E,V,P> &m, const double param, const std::string path) {
+template<class M, class V, class E, class P> inline
+void Statistics::print_global_stats(AbstractMesh<M,V,E,P> &m, const double param, const std::string path) {
     std::ofstream fp(path.c_str());
     assert(fp.is_open());
     fp << "# parameter, n regions, misclassification, % misclassified, avg misclassification" << std::endl;
@@ -234,8 +234,8 @@ void Statistics::print_global_stats(AbstractMesh<M,E,V,P> &m, const double param
 
 /**********************************************************************/
 
-template<class M, class E, class V, class P> inline
-void Statistics::print_misclassification(AbstractMesh<M,E,V,P> &m, const std::string path) {
+template<class M, class V, class E, class P> inline
+void Statistics::print_misclassification(AbstractMesh<M,V,E,P> &m, const std::string path) {
     std::ofstream fp(path.c_str());
     assert(fp.is_open());
     fp << "# pid, centroid x, centroid y, centroid z, field, isovalue_min, isovalue_max, field_m_sigma, field_p_sigma, misclassification" << std::endl;
@@ -245,7 +245,7 @@ void Statistics::print_misclassification(AbstractMesh<M,E,V,P> &m, const std::st
     for (auto &l : polys_in_region) {
         for (uint pid : l.second) {
             std::pair<double,double> lambda = iso_vec[count];
-            std::pair<double,double> sigma = {m.poly_data(pid).quality, m.poly_data(pid).quality};
+            std::pair<double,double> sigma = {m.poly_data(pid).fvalue, m.poly_data(pid).fvalue};
             if (field_m_sigma.size() > 0 && field_p_sigma.size() > 0) {
                 sigma = {field_m_sigma[pid], field_p_sigma[pid]};
             }
@@ -255,7 +255,7 @@ void Statistics::print_misclassification(AbstractMesh<M,E,V,P> &m, const std::st
                 fp.precision(2);
                 fp << pid << ", " << c.x() << ", " << c.y() << ", " << c.z() << ", ";
                 fp.precision(6);
-                fp << m.poly_data(pid).quality << ", "
+                fp << m.poly_data(pid).fvalue << ", "
                    << lambda.first << ", " << lambda.second << ", "
                    << sigma.first << ", " << sigma.second << ", "
                    << misclass << std::endl;

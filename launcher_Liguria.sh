@@ -1,6 +1,6 @@
 #!/bin/bash
 
-data_folder="data/Liguria_grid/"
+data_folder="data/Liguria_tri/"
 FESA="build/Qt_6_8_0_for_macOS-Release/FESA"
 #FESA="build/Desktop_Qt_6_8_0-Release/FESA"
 
@@ -20,7 +20,7 @@ regions=("1_F5TERRE"
 	 "14_FIMPERIESE"
 	 )
 
-mesh_name="mesh_grid.obj"
+mesh_name="mesh_tri.obj"
 field_name="cr_mean"
 
 for r in ${regions[@]}; do
