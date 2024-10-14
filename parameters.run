@@ -10,13 +10,13 @@ out_path      out/
 n_regions     5
 isoval_type   2
 isoval_vals   0 25 50 75 95 100 #
-DENOISE       0
+DENOISE       1
 ISOCONTOURS   0
 ##
 ANALYZE       0
-FILTER        0
-SMOOTH        0
-filter_thresh 2
+FILTER        1
+SMOOTH        1
+filter_thresh 0.1
 n_iter        50
 SIGMA         0
 ##

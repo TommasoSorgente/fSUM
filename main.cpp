@@ -104,6 +104,7 @@ int main(int argc, char *argv[]) {
         if (Par.get_FILTER())  FESA.filter(m, Par);
         if (Par.get_SMOOTH())  FESA.smooth(m, Par);
         if (Par.get_ANALYZE()) FESA.output(m, Par);
+        else                   FESA.restore_original_labels(m);
         if (!Par.get_GUI()) break;
 
         m.show_out_wireframe_transparency(0.2f);

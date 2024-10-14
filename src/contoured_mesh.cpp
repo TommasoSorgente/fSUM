@@ -261,7 +261,11 @@ void ContouredMesh::extend_field_to_verts(AbstractMesh<M,V,E,P> &m)
             value += field.at(pid) * coeff;
             mass  += coeff;
         }
-        m.vert_data(vid).fvalue = value / mass;
+        if (mass < 1e-4)
+            m.vert_data(vid).fvalue = field.at(m.adj_v2p(vid).front());
+        // assert(mass > 0);
+        else
+            m.vert_data(vid).fvalue = value / mass;
     }
 }
 
