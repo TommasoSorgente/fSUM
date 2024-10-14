@@ -1,24 +1,24 @@
 ## PARAMETERS FILE
 dim           2
-mesh_path     data/Liguria_grid/11_FSASSELLO/mesh_grid.obj
-field_path    data/Liguria_grid/11_FSASSELLO/cr_mean.csv
+mesh_path     data/Liguria_tri/11_FSASSELLO/mesh_tri.obj
+field_path    data/Liguria_tri/11_FSASSELLO/cr_mean.csv
 field_type    1
 FGLOBAL       0
-fieldG_path   data/Liguria_grid/cr_mean_global.csv
+fieldG_path   data/Liguria_tri/cr_mean_global.csv
 out_path      out/
 ##
 n_regions     5
 isoval_type   2
 isoval_vals   0 25 50 75 95 100 #
-DENOISE       1
+DENOISE       0
 ISOCONTOURS   0
 ##
-ANALYZE       1
-FILTER        1
-SMOOTH        1
+ANALYZE       0
+FILTER        0
+SMOOTH        0
 filter_thresh 2
 n_iter        50
-SIGMA         1
+SIGMA         0
 ##
 gui           1
 verbose       0

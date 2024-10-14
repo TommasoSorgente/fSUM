@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
         int n_labels = Par.get_N_REGIONS() - 1;
         for(uint pid=0; pid<m.num_polys(); ++pid) {
             float c = (float)m.poly_data(pid).label / n_labels;
-            m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
+            // m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
         }
         // m.poly_color_wrt_label(false);
         m.show_poly_color();
