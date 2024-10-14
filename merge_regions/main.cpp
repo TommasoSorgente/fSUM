@@ -131,6 +131,23 @@ int main(int argc, char *argv[])
 
     GLcanvas *gui = new GLcanvas(1000, 1000);
 
+    // SHOW THE SCALAR FIELD OVER THE WHOLE DOMAIN
+    // DrawablePolygonmesh<> m((std::string(HOME_PATH) + "../data/Liguria_grid/Liguria.obj").c_str());
+    // auto minmax = minmax_element(global_field.begin(), global_field.end());
+    // double field_min = *minmax.first;
+    // double field_max = *minmax.second;
+    // for(uint pid=0; pid<m.num_polys(); ++pid) {
+    //     double c = (global_field.at(pid) - field_min) / (field_max - field_min);
+    //     m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
+    // }
+    // m.show_poly_color();
+    // m.show_wireframe(false);
+    // gui->push(&m);
+    // SurfaceMeshControls<DrawablePolygonmesh<>> menu(&m, gui);
+    // gui->push(&menu);
+    // gui->launch();
+    // return 0;
+
     for (uint label=0; label<n_labels; ++label) {
         prof.push("Processed label " + std::to_string(label));
         DrawablePolygonmesh<> *m = new DrawablePolygonmesh<>;
@@ -197,6 +214,7 @@ int main(int argc, char *argv[])
                 m->poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
             }
             // m->poly_color_wrt_label(false);
+            m->show_wireframe(false);
             m->updateGL();
             gui->push(m);
             SurfaceMeshControls<DrawablePolygonmesh<>> *menu = new SurfaceMeshControls<DrawablePolygonmesh<>>(m, gui);

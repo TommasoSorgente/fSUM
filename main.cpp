@@ -38,13 +38,14 @@ int main(int argc, char *argv[]) {
         if (Par.get_FILTER())  FESA.filter(m, Par);
         if (Par.get_SMOOTH())  FESA.smooth(m, Par);
         if (Par.get_ANALYZE()) FESA.output(m, Par);
+        else                   FESA.restore_original_labels(m);
         if (!Par.get_GUI()) break;
 
         m.show_wireframe_transparency(0.2f);
         int n_labels = Par.get_N_REGIONS() - 1;
         for(uint pid=0; pid<m.num_polys(); ++pid) {
             float c = (float)m.poly_data(pid).label / n_labels;
-            // m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
+            m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
         }
         // m.poly_color_wrt_label(false);
         m.show_poly_color();
@@ -64,7 +65,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        bool MISCLASS = true;
+        bool MISCLASS = false;
         if (MISCLASS) {
             std::string misclass_path = FESA.output_path + "/misclassifications.csv";
             std::ifstream fp(misclass_path.c_str());
@@ -88,6 +89,8 @@ int main(int argc, char *argv[]) {
 
         SurfaceMeshControls<DrawablePolygonmesh<>> menu(&m, &gui);
         gui.push(&menu);
+        // gui.camera.rotate_x(-90);
+        // gui.update_GL_matrices();
         gui.launch();
         break;
     }

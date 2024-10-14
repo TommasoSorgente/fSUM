@@ -44,6 +44,10 @@ public:
     void output(Polyhedralmesh<> &m, Parameters &Par);
     std::string output_path;
 
+    /* reassign the original *n_regions* labels to the cells */
+    template<class M, class E, class V, class P> inline
+    void restore_original_labels(AbstractMesh<M,E,V,P> &m);
+
 private:
     double field_correction = 0.;
     double field_min, field_max;
@@ -93,10 +97,6 @@ private:
     /* smoothing of the boundaries */
     template<class M, class E, class V, class P> inline
     uint smooth_boundaries(AbstractMesh<M,E,V,P> &m);
-
-    /* reassign the original *n_regions* labels to the cells */
-    template<class M, class E, class V, class P> inline
-    void restore_original_labels(AbstractMesh<M,E,V,P> &m);
 };
 
 #ifndef CINO_STATIC_LIB

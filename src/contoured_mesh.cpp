@@ -327,6 +327,7 @@ void ContouredMesh::compute_isovalues(const int n_regions, const int input_type,
                 percentiles.push_back(perc);
             }
             isovals.push_back(field_max);
+            percentiles.push_back(100);
             break;
         }
         case 2: { // percentile isovals
@@ -360,6 +361,7 @@ void ContouredMesh::compute_isovalues(const int n_regions, const int input_type,
             break;
         }
     }
+    assert(isovals.size() == percentiles.size());
     assert((int)isovals.size() == n_regions + 1 && "#isovalues != #regions+1");
     prof.pop();
 }

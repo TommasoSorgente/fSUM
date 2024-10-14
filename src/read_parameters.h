@@ -90,7 +90,9 @@ protected:
                                                   try { isoval_vals.push_back(stod(token)); }
                                                   catch (const invalid_argument& e) { cerr << "Invalid input: " << token << endl; }
                                               }
-                                              assert((int)isoval_vals.size()==n_regions+1 && "Error: wrong number of isoval_vals"); }
+                                              if (isoval_type > 1)
+                                                  assert((int)isoval_vals.size()==n_regions+1 && "Error: wrong number of isoval_vals");
+                                            }
     void read_ANALYZE(ifstream & inpf)      { inpf >> ANALYZE; }
     void read_FILTER(ifstream & inpf)       { inpf >> FILTER; }
     void read_SMOOTH(ifstream & inpf)       { inpf >> SMOOTH; }
