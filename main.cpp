@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     Par.read_file();
     if (argc == 3) { // get mesh and fields from automatic Optimization routine
         Par.set_MESH_PATH(argv[1]);
-        Par.set_FILTER_THRESH(atof(argv[2]));
+        Par.set_CLEAN_THRESH(atof(argv[2]));
         Par.set_GUI(false);
     }
     if (argc == 4) { // get mesh and fields from automatic Liguria routine
@@ -36,13 +36,13 @@ int main(int argc, char *argv[]) {
         DrawablePolygonmesh<M,VD,E,PD> m;
         FESA.init(m, Par);
         FESA.segment(m, Par);
-        if (Par.get_FILTER())  FESA.filter(m, Par);
+        if (Par.get_CLEAN())   FESA.clean(m, Par);
         if (Par.get_SMOOTH())  FESA.smooth(m, Par);
         if (Par.get_ANALYZE()) FESA.output(m, Par);
         else                   FESA.restore_original_labels(m);
         if (!Par.get_GUI()) break;
 
-        m.show_wireframe_transparency(0.2f);
+        m.show_wireframe_transparency(0.1f);
         int n_labels = Par.get_N_REGIONS() - 1;
         for(uint pid=0; pid<m.num_polys(); ++pid) {
             float c = (float)m.poly_data(pid).label / n_labels;
@@ -50,8 +50,8 @@ int main(int argc, char *argv[]) {
         }
         // m.poly_color_wrt_label(false);
         m.show_poly_color();
-        // mark_edges(m);
-        // m.show_marked_edge_width(10.);
+        mark_edges(m);
+        m.show_marked_edge_width(1.);
         m.show_marked_edge_color(Color::BLACK());
         m.updateGL();
 
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        bool MISCLASS = true;
+        bool MISCLASS = false;
         if (MISCLASS) {
             std::string misclass_path = FESA.output_path + "/misclassifications.csv";
             std::ifstream fp(misclass_path.c_str());
@@ -85,15 +85,15 @@ int main(int argc, char *argv[]) {
                 std::stringstream ss(line);
                 ss >> pid >> d >> c.x() >> d >> c.y() >> d >> c.z() >> d >> f >>
                       d >> l_min >> d >> l_max >> d >> s_min >> d >> s_max >> d >> misclass;
-                gui.push_marker(c, "", Color::GREEN(), 3.);
+                gui.push_marker(c, "", Color::BLACK(), 4.);
             }
             fp.close();
         }
 
         SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>> menu(&m, &gui);
         gui.push(&menu);
-        // gui.camera.rotate_x(-90);
-        // gui.update_GL_matrices();
+        gui.camera.rotate_x(-90);
+        gui.update_GL_matrices();
         gui.launch();
         break;
     }
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
         DrawablePolyhedralmesh<M,VD,E,F,PD> m;
         FESA.init(m, Par);
         FESA.segment(m, Par);
-        if (Par.get_FILTER())  FESA.filter(m, Par);
+        if (Par.get_CLEAN())   FESA.clean(m, Par);
         if (Par.get_SMOOTH())  FESA.smooth(m, Par);
         if (Par.get_ANALYZE()) FESA.output(m, Par);
         else                   FESA.restore_original_labels(m);

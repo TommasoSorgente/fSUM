@@ -33,10 +33,10 @@ protected:
     bool   DENOISE;         // use the denoised field for isoregions
     bool   ISOCONTOURS;     // compute isocontours/isosurfaces
     bool   ANALYZE;         // analyze regions
-    bool   FILTER;          // apply filtering of small regions
-    bool   SMOOTH;          // apply smoothing of the boundaries
+    bool   CLEAN;           // cleaning of small regions
+    bool   SMOOTH;          // smoothing of the boundaries
     int    n_iter;          // max number of iterations
-    double filter_thresh;   // percentual min size of the regions
+    double clean_thresh;    // percentual min size of the regions
     bool   SIGMA;           // use standard deviation
     bool   gui;             // launch graphical interface
     bool   verbose;         // print debug information
@@ -54,10 +54,10 @@ protected:
         isoval_type   = 1;
         isoval_vals   = {};
         ANALYZE       = false;
-        FILTER        = false;
+        CLEAN         = false;
         SMOOTH        = false;
         n_iter        = 0;
-        filter_thresh = 1.;
+        clean_thresh  = 1.;
         SIGMA         = false;
         out_path      = ".";
         gui           = true;
@@ -94,10 +94,10 @@ protected:
                                                   assert((int)isoval_vals.size()==n_regions+1 && "Error: wrong number of isoval_vals");
                                             }
     void read_ANALYZE(ifstream & inpf)      { inpf >> ANALYZE; }
-    void read_FILTER(ifstream & inpf)       { inpf >> FILTER; }
+    void read_CLEAN(ifstream & inpf)        { inpf >> CLEAN; }
     void read_SMOOTH(ifstream & inpf)       { inpf >> SMOOTH; }
     void read_n_iter(ifstream & inpf)       { inpf >> n_iter; }
-    void read_filter_thresh(ifstream & inpf){ inpf >> filter_thresh; }
+    void read_clean_thresh(ifstream & inpf) { inpf >> clean_thresh; }
     void read_SIGMA(ifstream & inpf)        { inpf >> SIGMA; }
     void read_out_path(ifstream & inpf)     { inpf >> out_path; }
     void read_gui(ifstream & inpf)          { inpf >> gui; }
@@ -118,10 +118,10 @@ protected:
       else if ( keywd == "isoval_type" )    { read_isoval_type(inpf); }
       else if ( keywd == "isoval_vals" )    { read_isoval_vals(inpf); }
       else if ( keywd == "ANALYZE" )        { read_ANALYZE(inpf); }
-      else if ( keywd == "FILTER" )         { read_FILTER(inpf); }
+      else if ( keywd == "CLEAN" )          { read_CLEAN(inpf); }
       else if ( keywd == "SMOOTH" )         { read_SMOOTH(inpf); }
       else if ( keywd == "n_iter" )         { read_n_iter(inpf); }
-      else if ( keywd == "filter_thresh" )  { read_filter_thresh(inpf); }
+      else if ( keywd == "clean_thresh" )   { read_clean_thresh(inpf); }
       else if ( keywd == "SIGMA" )          { read_SIGMA(inpf); }
       else if ( keywd == "out_path" )       { read_out_path(inpf); }
       else if ( keywd == "gui" )            { read_gui(inpf); }
@@ -148,10 +148,10 @@ public:
     void set_ISOVAL_TYPE    (const int value)     { isoval_type = value; }
     void set_ISOVAL_VALS    (const vector<double> value) { isoval_vals = value; }
     void set_ANALYZE        (const bool value)    { ANALYZE = value; }
-    void set_FILTER         (const bool value)    { FILTER = value; }
+    void set_CLEAN          (const bool value)    { CLEAN = value; }
     void set_SMOOTH         (const bool value)    { SMOOTH = value; }
     void set_N_ITER         (const int value)     { n_iter = value; }
-    void set_FILTER_THRESH  (const double value)  { filter_thresh = value; }
+    void set_CLEAN_THRESH   (const double value)  { clean_thresh = value; }
     void set_SIGMA          (const bool value)    { SIGMA = value; }
     void set_OUT_PATH       (const string value)  { out_path = value; }
     void set_GUI            (const bool value)    { gui = value; }
@@ -170,10 +170,10 @@ public:
     int    get_ISOVAL_TYPE ()     { return isoval_type; }
     vector<double> get_ISOVAL_VALS() { return isoval_vals; }
     bool   get_ANALYZE ()         { return ANALYZE; }
-    bool   get_FILTER ()          { return FILTER; }
+    bool   get_CLEAN ()           { return CLEAN; }
     bool   get_SMOOTH ()          { return SMOOTH; }
     int    get_N_ITER ()          { return n_iter; }
-    double get_FILTER_THRESH ()   { return filter_thresh; }
+    double get_CLEAN_THRESH ()    { return clean_thresh; }
     bool   get_SIGMA ()           { return SIGMA; }
     string get_OUT_PATH ()        { return out_path; }
     bool   get_GUI ()             { return gui; }
@@ -197,10 +197,10 @@ public:
       cout << "DENOISE: "           << DENOISE << endl;
       cout << "ISOCONTOURS: "       << ISOCONTOURS << endl;
       cout << "ANALYZE: "           << ANALYZE << endl;
-      cout << "FILTER: "            << FILTER << endl;
+      cout << "CLEAN: "             << CLEAN << endl;
       cout << "SMOOTH: "            << SMOOTH << endl;
       cout << "n_iter: "            << n_iter << endl;
-      cout << "filter_thresh: "     << filter_thresh << endl;
+      cout << "clean_thresh: "      << clean_thresh << endl;
       cout << "SIGMA: "             << SIGMA << endl;
       cout << "gui: "               << gui << endl;
       cout << "verbose: "           << verbose << endl;

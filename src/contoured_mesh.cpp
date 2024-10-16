@@ -79,9 +79,9 @@ void ContouredMesh::segment(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 /**********************************************************************/
 
 template<class M, class V,  class E, class P> inline
-void ContouredMesh::filter(AbstractMesh<M,V,E,P> &m, Parameters &Par)
+void ContouredMesh::clean(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 {
-    prof.push("FESA::filter");
+    prof.push("FESA::clean");
     int i = 0, n_labels_tmp = 0;
     int n_labels_init = polys_in_subregion.size();
 
@@ -90,11 +90,11 @@ void ContouredMesh::filter(AbstractMesh<M,V,E,P> &m, Parameters &Par)
     for (uint pid=0; pid<m.num_polys(); ++pid) {
         mass += m.poly_mass(pid);
     }
-    double FILTER_THRESH = mass * Par.get_FILTER_THRESH() / 100.;
+    double CLEAN_THRESH = mass * Par.get_CLEAN_THRESH() / 100.;
 
     while (n_labels_tmp != (int)polys_in_subregion.size() && i < Par.get_N_ITER()) {
         n_labels_tmp = polys_in_subregion.size();
-        remove_small_labels(m, FILTER_THRESH);
+        remove_small_labels(m, CLEAN_THRESH);
         ++i;
     }
 
@@ -149,7 +149,7 @@ void ContouredMesh::output(Polygonmesh<M,V,E,P> &m, Parameters &Par)
     else
         stats.init(percentiles, isovals, prof);
     stats.compute_stats(m, polys_in_subregion);
-    stats.print_global_stats(m, Par.get_FILTER_THRESH(), output_path + "/global_stats.txt");
+    stats.print_global_stats(m, Par.get_CLEAN_THRESH(), output_path + "/global_stats.txt");
     stats.print_misclassification(m, output_path + "/misclassifications.csv");
 
     // generate a shapefile containing the iso-regions boundaries
@@ -198,7 +198,7 @@ void ContouredMesh::output(Polyhedralmesh<M,E,V,F,P> &m, Parameters &Par)
     else
         stats.init(percentiles, isovals, prof);
     stats.compute_stats(m, polys_in_subregion);
-    stats.print_global_stats(m, Par.get_FILTER_THRESH(), output_path + "/global_stats.txt");
+    stats.print_global_stats(m, Par.get_CLEAN_THRESH(), output_path + "/global_stats.txt");
     stats.print_misclassification(m, output_path + "/misclassifications.csv");
 
     // save a mesh for each iso-subregion
@@ -501,13 +501,13 @@ void ContouredMesh::separate_ccs(AbstractMesh<M,V,E,P> &m)
 /**********************************************************************/
 
 template<class M, class V,  class E, class P> inline
-void ContouredMesh::remove_small_labels(AbstractMesh<M,V,E,P> &m, const double FILTER_THRESH)
+void ContouredMesh::remove_small_labels(AbstractMesh<M,V,E,P> &m, const double CLEAN_THRESH)
 {
     if (verbose) prof.push("   Remove small conn. comp.");
     // find the labels with area smaller than threshold
     std::unordered_set<int> labels_to_remove;
     for (auto &l : polys_in_subregion) {
-        bool CRITERION_1 = CRIT_mass(m, l.second, FILTER_THRESH);
+        bool CRITERION_1 = CRIT_mass(m, l.second, CLEAN_THRESH);
         if (CRITERION_1) {
             labels_to_remove.insert(l.first);
         }

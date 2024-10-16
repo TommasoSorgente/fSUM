@@ -36,7 +36,7 @@ public:
     void segment(AbstractMesh<M,V,E,P> &m, Parameters &Par);
 
     template<class M, class V,  class E, class P> inline
-    void filter(AbstractMesh<M,V,E,P> &m, Parameters &Par);
+    void clean(AbstractMesh<M,V,E,P> &m, Parameters &Par);
 
     template<class M, class V,  class E, class P> inline
     void smooth(AbstractMesh<M,V,E,P> &m, Parameters &Par);
