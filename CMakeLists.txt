@@ -18,6 +18,7 @@ set(CINOLIB_USES_CGAL_GMP_MPFR        OFF)
 set(cinolib_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/cinolib)
 find_package(cinolib REQUIRED)
 
+set(tclap_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/tclap/include)
 
 set (SHAPELIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/shapelib")
 set (SHAPELIB_BUILD "${SHAPELIB_DIR}/build-${CMAKE_SYSTEM_NAME}")
@@ -40,7 +41,7 @@ if(NOT EXISTS "${SHAPELIB_LIB}")
         WORKING_DIRECTORY "${SHAPELIB_BUILD}" )
 endif()
 
-include_directories(${SHAPELIB_DIR})
+include_directories(${SHAPELIB_DIR} ${tclap_DIR})
 
 add_executable(${PROJECT_NAME} main.cpp parameters.run ${SHAPELIB_LIB})
 

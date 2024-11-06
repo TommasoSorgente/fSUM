@@ -4,3 +4,6 @@
 [submodule "external/shapelib"]
 	path = external/shapelib
 	url = https://github.com/OSGeo/shapelib.git
+[submodule "tclap"]
+	path = tclap
+	url = https://github.com/mirror/tclap.git
