@@ -9,6 +9,8 @@
 #include <vector>
 #include <cassert>
 
+#include <tclap/CmdLine.h>
+
 using namespace std;
 
 class Parameters {
@@ -26,7 +28,7 @@ protected:
     string field2_path;     // path of the input field #2
     bool   FGLOBAL;         // use of the global field
     string fieldG_path;     // path of the input global field
-    string out_path;        // path do a directory where to save all outputs
+    string out_path;        // path to a directory where to save all outputs
     int    n_regions;       // number of regions to be computed in the domain
     int    isoval_type;     // (1) equispaced, (2) percentiles, (3) assigned
     vector<double> isoval_vals; // isovalues (percentiles or explicit)
@@ -238,6 +240,7 @@ private:
   }
 
 public:
+  Read_Parameters() {}
   Read_Parameters( string _fname ) : fname(_fname) {}
   ~Read_Parameters() {}
 
@@ -253,6 +256,64 @@ public:
     while ( !inpf.eof() )
         read_line( inpf );
     inpf.close() ;
+  }
+
+  void read_cmdline( TCLAP::CmdLine &cmd, int argc, char *argv[] ) {
+      TCLAP::ValueArg<string> mesh_path_arg   ("m","mesh_path","path of the input mesh.",true,"","string", cmd);
+      TCLAP::ValueArg<string> field_path_arg  ("f","field_path","path of the input field.",true,"","string", cmd);
+      TCLAP::ValueArg<string> fieldG_path_arg ("g","fieldG_path","path of the input global field.",false,"","string", cmd);
+      TCLAP::ValueArg<string> out_path_arg    ("o","out_path","path to a directory where to save all outputs.",false,"","string", cmd);
+
+      TCLAP::ValueArg<int> dim_arg         ("d","dim","dimension of the problem (2 or 3).",true,2,"integer", cmd);
+      TCLAP::ValueArg<int> field_type_arg  ("t","field_type","input field defined on cells (1) or vertices (2).",true,1,"integer", cmd);
+      TCLAP::ValueArg<int> n_regions_arg   ("r","n_regions","number of regions to be computed in the domain.",true,1,"integer", cmd);
+      TCLAP::ValueArg<int> isoval_type_arg ("i","isoval_type","(1) equispaced, (2) percentiles, (3) assigned.",false,1,"integer", cmd);
+      TCLAP::ValueArg<int> n_iter_arg      ("n","n_iter","max number of iterations.",false,1,"integer", cmd);
+
+      TCLAP::ValueArg<double> clean_thresh_arg ("e","clean_thresh","percentual min size of the regions.",false,0,"double", cmd);
+      TCLAP::MultiArg<double> isoval_vals_arg ("v","isoval_vals","isovalues (percentiles or explicit).",false,"vector<double>", cmd);
+
+      TCLAP::SwitchArg FGLOBAL_switch     ("G","FGLOBAL","use of the global field.", cmd, false);
+      TCLAP::SwitchArg DENOISE_switch     ("D","DENOISE","use the denoised field for isoregions.", cmd, false);
+      TCLAP::SwitchArg ISOCONTOURS_switch ("I","ISOCONTOURS","compute isocontours/isosurfaces.", cmd, false);
+      TCLAP::SwitchArg ANALYZE_switch     ("A","ANALYZE","analyze regions.", cmd, false);
+      TCLAP::SwitchArg CLEAN_switch       ("C","CLEAN","cleaning of small regions.", cmd, false);
+      TCLAP::SwitchArg SMOOTH_switch      ("S","SMOOTH","smoothing of the boundaries.", cmd, false);
+      TCLAP::SwitchArg SIGMA_switch       ("M","SIGMA","use standard deviation.", cmd, false);
+      TCLAP::SwitchArg gui_switch         ("U","gui","launch graphical interface.", cmd, false);
+      TCLAP::SwitchArg verbose_switch     ("V","verbose","print debug information.", cmd, false);
+
+      cmd.parse( argc, argv );
+
+      if (mesh_path_arg.isSet())    mesh_path = mesh_path_arg;
+      if (field_path_arg.isSet())   field_path = field_path_arg;
+      if (fieldG_path_arg.isSet())  fieldG_path = fieldG_path_arg;
+      if (out_path_arg.isSet())     out_path = out_path_arg;
+
+      if (dim_arg.isSet())          dim = dim_arg.getValue();
+      if (field_type_arg.isSet())   field_type = field_type_arg.getValue();
+      if (n_regions_arg.isSet())    n_regions = n_regions_arg.getValue();
+      if (isoval_type_arg.isSet())  isoval_type = isoval_type_arg.getValue();
+      if (n_iter_arg.isSet())       n_iter = n_iter_arg.getValue();
+
+      if (clean_thresh_arg.isSet()) clean_thresh = clean_thresh_arg.getValue();
+      if (isoval_vals_arg.isSet())  isoval_vals = isoval_vals_arg.getValue();
+
+      if (FGLOBAL_switch.isSet())   FGLOBAL = FGLOBAL_switch.getValue();
+      if (DENOISE_switch.isSet())   DENOISE = DENOISE_switch.getValue();
+      if (ISOCONTOURS_switch.isSet()) ISOCONTOURS = ISOCONTOURS_switch.getValue();
+      if (ANALYZE_switch.isSet())   ANALYZE = ANALYZE_switch.getValue();
+      if (CLEAN_switch.isSet())     CLEAN = CLEAN_switch.getValue();
+      if (SMOOTH_switch.isSet())    SMOOTH = SMOOTH_switch.getValue();
+      if (SIGMA_switch.isSet())     SIGMA = SIGMA_switch.getValue();
+      if (gui_switch.isSet())       gui = gui_switch.getValue();
+      if (verbose_switch.isSet())   verbose = verbose_switch.getValue();
+
+      assert((dim==2 || dim==3) && "Error: unsupported dim");
+      assert((field_type==1 || field_type==2) && "Error: unsupported field_type");
+      assert((isoval_type==1 || isoval_type==2 || isoval_type==3) && "Error: unsupported isoval_type");
+      if (isoval_type > 1)
+          assert((int)isoval_vals.size()==n_regions+1 && "Error: wrong number of isoval_vals");
   }
 };
 

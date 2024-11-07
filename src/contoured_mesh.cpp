@@ -155,17 +155,19 @@ void ContouredMesh::output(Polygonmesh<M,V,E,P> &m, Parameters &Par)
     // generate a shapefile containing the iso-regions boundaries
     print_regions_shp(m, stats, polys_in_subregion, domain_dir + "/domain", prof);
 
-    // save a mesh for each iso-subregion
-    if (Par.get_SIGMA())
-        stats.init(percentiles, isovals, prof, sigma_m, sigma_p);
-    else
-        stats.init(percentiles, isovals, prof);
-    print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
-
-    // save a mesh for each iso-region
-    restore_original_labels(m);
-    print_regions(m, subregion_region_map, polys_in_region, stats, output_path + "/regions", prof);
-
+    if (Par.get_OUT_LEVEL() > 1) {
+        if (Par.get_OUT_LEVEL() > 2) {
+            // save a mesh for each iso-subregion
+            if (Par.get_SIGMA())
+                stats.init(percentiles, isovals, prof, sigma_m, sigma_p);
+            else
+                stats.init(percentiles, isovals, prof);
+            print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
+        }
+        // save a mesh for each iso-region
+        restore_original_labels(m);
+        print_regions(m, subregion_region_map, polys_in_region, stats, output_path + "/regions", prof);
+    }
     prof.pop();
 }
 
@@ -201,17 +203,19 @@ void ContouredMesh::output(Polyhedralmesh<M,E,V,F,P> &m, Parameters &Par)
     stats.print_global_stats(m, Par.get_CLEAN_THRESH(), output_path + "/global_stats.txt");
     stats.print_misclassification(m, output_path + "/misclassifications.csv");
 
-    // save a mesh for each iso-subregion
-    if (Par.get_SIGMA())
-        stats.init(percentiles, isovals, prof, sigma_m, sigma_p);
-    else
-        stats.init(percentiles, isovals, prof);
-    print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
-
-    // save a mesh for each iso-region
-    restore_original_labels(m);
-    print_regions(m, subregion_region_map, polys_in_region, stats, output_path + "/regions", prof);
-
+    if (Par.get_OUT_LEVEL() > 1) {
+        if (Par.get_OUT_LEVEL() > 2) {
+            // save a mesh for each iso-subregion
+            if (Par.get_SIGMA())
+                stats.init(percentiles, isovals, prof, sigma_m, sigma_p);
+            else
+                stats.init(percentiles, isovals, prof);
+            print_regions(m, subregion_region_map, polys_in_subregion, stats, output_path + "/subregions", prof);
+        }
+        // save a mesh for each iso-region
+        restore_original_labels(m);
+        print_regions(m, subregion_region_map, polys_in_region, stats, output_path + "/regions", prof);
+    }
     prof.pop();
 }
 

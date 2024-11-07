@@ -4,30 +4,24 @@
 #include <cinolib/gl/surface_mesh_controls.h>
 #include <cinolib/gl/volume_mesh_controls.h>
 #include <cinolib/meshes/mesh_attributes.h>
+#include <tclap/CmdLine.h>
 
 #include "src/contoured_mesh.h"
-#include "src/read_parameters.h"
+#include "src/parameters.h"
 
 using namespace cinolib;
 
 int main(int argc, char *argv[]) {
-    string pars_file = (argc == 2) ? argv[1] : string(HOME_PATH) + "parameters.run";
-    Read_Parameters Par(pars_file);
-    Par.read_file();
-    if (argc == 3) { // get mesh and fields from automatic Optimization routine
-        Par.set_MESH_PATH(argv[1]);
-        Par.set_CLEAN_THRESH(atof(argv[2]));
-        Par.set_GUI(false);
+    Parameters Par;
+    try {
+        TCLAP::CmdLine cmd("FESA", ' ', "0.9");
+        Par.read_cmdline(cmd, argc, argv);
     }
-    if (argc == 4) { // get mesh and fields from automatic Liguria routine
-        Par.set_MESH_PATH(argv[1]);
-        Par.set_FIELD_PATH(argv[2]);
-        Par.set_FGLOBAL(true);
-        Par.set_FIELDG_PATH(argv[3]);
-        Par.set_GUI(false);
+    catch (exception &e) {
+        std::cerr << e.what() << std::endl;
+        exit(1);
     }
-    if (Par.get_VERBOSE())
-        Par.print_pars();
+    if (Par.get_VERBOSE()) Par.print_pars();
 
     ContouredMesh FESA;
 
@@ -66,28 +60,6 @@ int main(int argc, char *argv[]) {
                 contour->color = Color::BLACK(); //parula_ramp(isovalues.size(), i);
                 gui.push(contour);
             }
-        }
-
-        bool MISCLASS = false;
-        if (MISCLASS) {
-            std::string misclass_path = FESA.output_path + "/misclassifications.csv";
-            std::ifstream fp(misclass_path.c_str());
-            assert(fp.is_open());
-
-            std::string line;
-            std::getline(fp, line);
-
-            uint pid;
-            vec3d c;
-            double f, l_min, l_max, s_min, s_max, misclass;
-            char d;
-            while (std::getline(fp, line)) {
-                std::stringstream ss(line);
-                ss >> pid >> d >> c.x() >> d >> c.y() >> d >> c.z() >> d >> f >>
-                      d >> l_min >> d >> l_max >> d >> s_min >> d >> s_max >> d >> misclass;
-                gui.push_marker(c, "", Color::BLACK(), 4.);
-            }
-            fp.close();
         }
 
         SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>> menu(&m, &gui);

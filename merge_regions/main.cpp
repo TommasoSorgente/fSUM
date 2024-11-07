@@ -6,9 +6,10 @@
 #include <cinolib/merge_meshes_at_coincident_vertices.h>
 #include <cinolib/gl/glcanvas.h>
 #include <cinolib/gl/surface_mesh_controls.h>
+#include <tclap/CmdLine.h>
 
 #include "../src/contoured_mesh_attributes.h"
-#include "../src/read_parameters.h"
+#include "../src/parameters.h"
 #include "../src/statistics.h"
 #include "../src/auxiliary.h"
 #include "../src/shapefile_utils.h"
@@ -96,8 +97,16 @@ int main(int argc, char *argv[])
     Profiler prof;
     prof.push("Merge Regions");
 
-    Read_Parameters Par(string(HOME_PATH) + "../parameters.run");
-    Par.read_file();
+    Parameters Par;
+    try {
+        TCLAP::CmdLine cmd("FESA", ' ', "0.9");
+        Par.read_cmdline(cmd, argc, argv);
+    }
+    catch (exception &e) {
+        std::cerr << e.what() << std::endl;
+        exit(1);
+    }
+    if (Par.get_VERBOSE()) Par.print_pars();
 
     std::vector<std::string> domains{
                                      // "1_F5TERRE",
