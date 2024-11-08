@@ -6,7 +6,7 @@
 #include <cinolib/meshes/mesh_attributes.h>
 #include <tclap/CmdLine.h>
 
-#include "src/contoured_mesh.h"
+#include "src/segmented_mesh.h"
 #include "src/parameters.h"
 
 using namespace cinolib;
@@ -14,7 +14,7 @@ using namespace cinolib;
 int main(int argc, char *argv[]) {
     Parameters Par;
     try {
-        TCLAP::CmdLine cmd("FESA", ' ', "0.9");
+        TCLAP::CmdLine cmd("S", ' ', "0.9");
         Par.read_cmdline(cmd, argc, argv);
     }
     catch (exception &e) {
@@ -23,17 +23,17 @@ int main(int argc, char *argv[]) {
     }
     if (Par.get_VERBOSE()) Par.print_pars();
 
-    ContouredMesh FESA;
+    SegmentedMesh S;
 
     switch (Par.get_DIM()) {
     case 2: {
         DrawablePolygonmesh<M,VD,E,PD> m;
-        FESA.init(m, Par);
-        FESA.segment(m, Par);
-        if (Par.get_CLEAN())   FESA.clean(m, Par);
-        if (Par.get_SMOOTH())  FESA.smooth(m, Par);
-        if (Par.get_ANALYZE()) FESA.output(m, Par);
-        else                   FESA.restore_original_labels(m);
+        S.init(m, Par);
+        S.segment(m, Par);
+        if (Par.get_CLEAN())   S.clean(m, Par);
+        if (Par.get_SMOOTH())  S.smooth(m, Par);
+        if (Par.get_ANALYZE()) S.output(m, Par);
+        S.restore_original_labels(m);
         if (!Par.get_GUI()) break;
 
         m.show_wireframe_transparency(0.1f);
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
         gui.push(&m);
 
         if (Par.get_ISOCONTOURS()) {
-            std::vector<double> isovalues = FESA.isovals;
+            std::vector<double> isovalues = S.isovals;
             for (uint i=0; i<isovalues.size(); ++i) {
                 DrawableIsocontour<M,VD,E,PD> *contour = new DrawableIsocontour<M,VD,E,PD>(m, isovalues.at(i));
                 contour->thickness = 30000; //700;
@@ -64,19 +64,19 @@ int main(int argc, char *argv[]) {
 
         SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>> menu(&m, &gui);
         gui.push(&menu);
-        gui.camera.rotate_x(-90);
-        gui.update_GL_matrices();
+        // gui.camera.rotate_x(-90);
+        // gui.update_GL_matrices();
         gui.launch();
         break;
     }
     case 3: {
         DrawablePolyhedralmesh<M,VD,E,F,PD> m;
-        FESA.init(m, Par);
-        FESA.segment(m, Par);
-        if (Par.get_CLEAN())   FESA.clean(m, Par);
-        if (Par.get_SMOOTH())  FESA.smooth(m, Par);
-        if (Par.get_ANALYZE()) FESA.output(m, Par);
-        else                   FESA.restore_original_labels(m);
+        S.init(m, Par);
+        S.segment(m, Par);
+        if (Par.get_CLEAN())   S.clean(m, Par);
+        if (Par.get_SMOOTH())  S.smooth(m, Par);
+        if (Par.get_ANALYZE()) S.output(m, Par);
+        else                   S.restore_original_labels(m);
         if (!Par.get_GUI()) break;
 
         m.show_out_wireframe_transparency(0.2f);
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
         GLcanvas gui(1000, 1000);
         gui.push(&m);
 
-        if (Par.get_ISOCONTOURS()) assert(false && "show_iso not working for 3D meshes!");
+        if (Par.get_ISOCONTOURS()) assert(false && "ISOCONTOURS not available for 3D meshes!");
 
         VolumeMeshControls<DrawablePolyhedralmesh<M,VD,E,F,PD>> menu(&m, &gui);
         gui.push(&menu);

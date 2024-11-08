@@ -1,5 +1,5 @@
-#ifndef CONTOURED_MESH_ATTRIBUTES_H
-#define CONTOURED_MESH_ATTRIBUTES_H
+#ifndef SEGMENTED_MESH_ATTRIBUTES_H
+#define SEGMENTED_MESH_ATTRIBUTES_H
 
 #include <cinolib/meshes/meshes.h>
 
@@ -33,4 +33,4 @@ typedef Edge_std_attributes E;
 typedef Polygon_std_attributes F;
 typedef Poly_std_attributes_double PD;
 
-#endif // CONTOURED_MESH_ATTRIBUTES_H
+#endif // SEGMENTED_MESH_ATTRIBUTES_H

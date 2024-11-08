@@ -8,7 +8,7 @@
 #include <cinolib/drawable_isosurface.h>
 #include <cinolib/profiler.h>
 
-#include "contoured_mesh_attributes.h"
+#include "segmented_mesh_attributes.h"
 #include "criteria.h"
 #include "statistics.h"
 #include "auxiliary.h"
@@ -21,11 +21,11 @@
 using namespace cinolib;
 
 /* class for segmenting a 2D/3D domain */
-class ContouredMesh {
+class SegmentedMesh {
 
 public:
-    ContouredMesh(){}
-    ~ContouredMesh(){}
+    SegmentedMesh(){}
+    ~SegmentedMesh(){}
 
     std::vector<double> percentiles, isovals;
 
@@ -79,10 +79,6 @@ private:
     /* compute *n_regions+1* isovalues between min_val and max_val */
     void compute_isovalues(const int n_regions, const int input_type, const std::vector<double> &input_isovals);
 
-    /* insert the isocontours (isosurfaces) cutting the mesh */
-    void cut_mesh(Trimesh<> &m);
-    void cut_mesh(Tetmesh<> &m);
-
     /* label the elements inside the isoregions in the mesh */
     template<class M, class V,  class E, class P> inline
     void compute_isoregions(AbstractMesh<M,V,E,P> &m, const bool DENOISE);
@@ -103,7 +99,7 @@ private:
 };
 
 #ifndef CINO_STATIC_LIB
-#include "contoured_mesh.cpp"
+#include "segmented_mesh.cpp"
 #endif
 
 #endif // CONTOURED_POLYGONMESH_H

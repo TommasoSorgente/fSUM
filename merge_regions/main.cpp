@@ -8,7 +8,7 @@
 #include <cinolib/gl/surface_mesh_controls.h>
 #include <tclap/CmdLine.h>
 
-#include "../src/contoured_mesh_attributes.h"
+#include "../src/segmented_mesh_attributes.h"
 #include "../src/parameters.h"
 #include "../src/statistics.h"
 #include "../src/auxiliary.h"

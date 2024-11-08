@@ -43,7 +43,7 @@ endif()
 
 include_directories(${SHAPELIB_DIR} ${tclap_DIR})
 
-add_executable(${PROJECT_NAME} main.cpp parameters.run ${SHAPELIB_LIB})
+add_executable(${PROJECT_NAME} main.cpp  ${SHAPELIB_LIB})
 
 target_link_libraries(${PROJECT_NAME} PUBLIC cinolib ${SHAPELIB_LIB})
 

@@ -4,7 +4,7 @@
 #include <cinolib/gl/glcanvas.h>
 #include <cinolib/gl/surface_mesh_controls.h>
 
-#include "../src/contoured_mesh_attributes.h"
+#include "../src/segmented_mesh_attributes.h"
 #include "../src/auxiliary.h"
 
 using namespace cinolib;
@@ -100,11 +100,11 @@ int main(int argc, char *argv[])
     std::string mesh_file      = std::string(HOME_PATH) + argv[1];
     std::string cells_file     = std::string(HOME_PATH) + argv[2];
     std::string isovalues_file = std::string(HOME_PATH) + argv[3];
-    std::string sigma_p_file = "";
     std::string sigma_m_file = "";
+    std::string sigma_p_file = "";
     if (argc == 6) {
-        sigma_p_file = std::string(HOME_PATH) + argv[4];
-        sigma_m_file = std::string(HOME_PATH) + argv[5];
+        sigma_m_file = std::string(HOME_PATH) + argv[4];
+        sigma_p_file = std::string(HOME_PATH) + argv[5];
     }
 
     DrawablePolygonmesh<M,VD,E,PD> m(mesh_file.c_str());
@@ -166,9 +166,21 @@ int main(int argc, char *argv[])
 
     GLcanvas gui(1000, 1000);
     gui.push(&m);
+    m.show_wireframe_transparency(0.1f);
+    int n_labels = labels.size() - 1;
+    for(uint pid=0; pid<m.num_polys(); ++pid) {
+        float c = (float)m.poly_data(pid).label / n_labels;
+        m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
+    }
+    // m.poly_color_wrt_label(false);
+    m.show_poly_color();
+    mark_edges(m);
+    m.show_marked_edge_width(1.);
+    m.show_marked_edge_color(Color::BLACK());
+    m.updateGL();
 
     for (uint pid : misclass_pids) {
-        gui.push_marker(m.poly_centroid(pid), "", Color::BLACK(), 4.);
+        gui.push_marker(m.poly_centroid(pid), "", Color::BLACK(), 3.);
     }
     fp.close();
 

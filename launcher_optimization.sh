@@ -1,7 +1,7 @@
 #!/bin/bash
 
-FESA="build/Qt_6_8_0_for_macOS-Release/FESA"
-#FESA="build/Desktop_Qt_6_8_0-Release/FESA"
+exe="build/Qt_6_8_0_for_macOS-Release/FESA"
+#exe="build/Desktop_Qt_6_8_0-Release/FESA"
 
 dim=2
 mesh_path="data/sec_rot/mesh.obj"
@@ -22,7 +22,6 @@ CLEAN=0
 SMOOTH=0
 #clean_thresh=0.1
 n_iter=50
-SIGMA=0
 
 gui=1
 verbose=0
@@ -57,9 +56,6 @@ fi
 if [ $SMOOTH = 1 ]; then
     switch_string=$switch_string"-S "
 fi
-if [ $SIGMA = 1 ]; then
-    switch_string=$switch_string"-M "
-fi
 if [ $gui = 1 ]; then
     switch_string=$switch_string"-U "
 fi
@@ -78,9 +74,9 @@ for t in ${threshold[@]}; do
     clean_thresh=$t
     values_string="-m "$mesh_path" -f "$field_path" -g "$fieldG_path" -o "$out_path" -d "$dim" -t "$field_type" -r "$n_regions" -i "$isoval_type" -n "$n_iter" -e "$clean_thresh
     #
-    echo "launcher:" $values_string $isoval_string $switch_string
+    echo "launcher:" $exe $values_string $isoval_string $switch_string
     echo ""
-    #./${FESA} $values_string $isoval_string $switch_string
+    ./$exe $values_string $isoval_string $switch_string
     #
     # Skip the first line and append the rest to the output file
     tail -n +2 $src >> $dst

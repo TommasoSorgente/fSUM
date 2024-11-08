@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#FESA="build/Qt_6_8_0_for_macOS-Debug/FESA"
-FESA="build/Desktop_Qt_6_8_0-Debug/FESA"
+#exe="build/Qt_6_8_0_for_macOS-Debug/FESA"
+exe="build/Desktop_Qt_6_8_0-Debug/FESA"
 
 dim=2
 mesh_path="data/Liguria_tri/11_FSASSELLO/mesh_tri.obj"
@@ -21,7 +21,6 @@ CLEAN=1
 SMOOTH=1
 clean_thresh=0.1
 n_iter=50
-SIGMA=1
 
 out_path="out/"
 out_level=1
@@ -30,7 +29,7 @@ VERBOSE=1
 
 ## LEGEND
 ##
-## FESA: 	 path to the executable file
+## exe: 	 path to the executable file
 ##
 ## INPUT
 ## dim:          dimension of the problem (2 | 3)
@@ -53,7 +52,6 @@ VERBOSE=1
 ## SMOOTH:        smoothing of the boundaries (0 | 1)
 ## clean_thresh:  percentual min size of the regions (in [0,100])
 ## n_iter:        max number of iterations (in [0,inf])
-## SIGMA:         use standard deviation (0 | 1)
 ##
 ## OUTPUT
 ## out_path:     path do a directory where to save all outputs
@@ -89,9 +87,6 @@ fi
 if [ $SMOOTH = 1 ]; then
     switch_string=$switch_string"-S "
 fi
-if [ $SIGMA = 1 ]; then
-    switch_string=$switch_string"-M "
-fi
 if [ $GUI = 1 ]; then
     switch_string=$switch_string"-U "
 fi
@@ -99,7 +94,7 @@ if [ $VERBOSE = 1 ]; then
     switch_string=$switch_string"-V "
 fi
 
-echo "launcher:" $values_string $isoval_string $switch_string
+echo "launcher:" $exe $values_string $isoval_string $switch_string
 echo ""
 
-./${FESA} $values_string $isoval_string $switch_string
+./$exe $values_string $isoval_string $switch_string

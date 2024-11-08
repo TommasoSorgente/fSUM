@@ -27,7 +27,6 @@ protected:
     bool   SMOOTH;
     int    n_iter;
     double clean_thresh;
-    bool   SIGMA;
     string out_path;
     int    out_level;
     bool   GUI;
@@ -59,7 +58,6 @@ public:
         TCLAP::SwitchArg ANALYZE_switch     ("A","ANALYZE","analyze regions.",cmd,false);
         TCLAP::SwitchArg CLEAN_switch       ("C","CLEAN","cleaning of small regions.",cmd,false);
         TCLAP::SwitchArg SMOOTH_switch      ("S","SMOOTH","smoothing of the boundaries.",cmd,false);
-        TCLAP::SwitchArg SIGMA_switch       ("M","SIGMA","use standard deviation.",cmd,false);
         TCLAP::SwitchArg GUI_switch         ("U","GUI","launch graphical interface.",cmd,false);
         TCLAP::SwitchArg VERBOSE_switch     ("V","verbose","print debug information.",cmd,false);
 
@@ -87,7 +85,6 @@ public:
         ANALYZE = ANALYZE_switch.getValue();
         CLEAN = CLEAN_switch.getValue();
         SMOOTH = SMOOTH_switch.getValue();
-        SIGMA = SIGMA_switch.getValue();
         GUI = GUI_switch.getValue();
         VERBOSE = VERBOSE_switch.getValue();
 
@@ -118,7 +115,6 @@ public:
         cout << "SMOOTH: "            << SMOOTH << endl;
         cout << "n_iter: "            << n_iter << endl;
         cout << "clean_thresh: "      << clean_thresh << endl;
-        cout << "SIGMA: "             << SIGMA << endl;
         cout << "out_path: "          << out_path << endl;
         cout << "out_level: "         << out_level << endl;
         cout << "GUI: "               << GUI << endl;
@@ -141,7 +137,6 @@ public:
     bool   get_SMOOTH ()          { return SMOOTH; }
     int    get_N_ITER ()          { return n_iter; }
     double get_CLEAN_THRESH ()    { return clean_thresh; }
-    bool   get_SIGMA ()           { return SIGMA; }
     string get_OUT_PATH ()        { return out_path; }
     int    get_OUT_LEVEL ()       { return out_level; }
     bool   get_GUI ()             { return GUI; }
