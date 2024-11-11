@@ -1,6 +1,6 @@
 # FESA
 
-FESA: _Field-driven Enriched Segmentation Algorithm_ is an algorithm for partitioning a planar or volumetric domain, discretized through a mesh of any kind and with a scalar field defined on it, into a given number of regions in which the field is homogeneous. The resulting segmentation is called “enriched” because for each segment we are able to produce information and statistics that can be useful in applicative scenarios.
+FESA: _Field-driven Enriched Segmentation Algorithm_ is an algorithm for partitioning a planar or volumetric domain, discretized through a mesh of any kind and with a scalar field defined on it, into a given number of regions in which the field is homogeneous.
 
 ## How to get it 
 
