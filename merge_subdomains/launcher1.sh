@@ -1,7 +1,8 @@
 #!/bin/bash
 
+merge="build/merge_subdomains"
 #merge="build/Qt_6_8_0_for_macOS-Debug/merge_subdomains"
-merge="build/Desktop_Qt_6_8_0-Debug/merge_subdomains"
+#merge="build/Desktop_Qt_6_8_0-Debug/merge_subdomains"
 
 data_folder="../data/Liguria_tri/"
 domains=("10_ARENZANO 11_SASSELLO")
@@ -11,8 +12,9 @@ output_path="out/10_ARENZANO+11_SASSELLO"
 
 ##########################################################################################
 
+segmentation="../segmentation/build/segmentation"
 #segmentation="../segmentation/build/Qt_6_8_0_for_macOS-Debug/segmentation"
-segmentation="../segmentation/build/Desktop_Qt_6_8_0-Debug/segmentation"
+#segmentation="../segmentation/build/Desktop_Qt_6_8_0-Debug/segmentation"
 
 dim=2
 mesh_path=""

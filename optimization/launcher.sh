@@ -7,8 +7,9 @@ dst="out/optimization.txt"
 
 ##########################################################################################
 
+misclassification="../misclassification/build/misclassification"
 #misclassification="../misclassification/build/Qt_6_8_0_for_macOS-Debug/misclassification"
-misclassification="../misclassification/build/Desktop_Qt_6_8_0-Debug/misclassification"
+#misclassification="../misclassification/build/Desktop_Qt_6_8_0-Debug/misclassification"
 
 data1_path="../data/Liguria_tri/11_SASSELLO/"
 data2_path="../optimization/out/segmentation/11_SASSELLO/"
@@ -23,8 +24,9 @@ misclass_gui=0
 
 ##########################################################################################
 
+segmentation="../segmentation/build/segmentation"
 #segmentation="../segmentation/build/Qt_6_8_0_for_macOS-Debug/segmentation"
-segmentation="../segmentation/build/Desktop_Qt_6_8_0-Debug/segmentation"
+#segmentation="../segmentation/build/Desktop_Qt_6_8_0-Debug/segmentation"
 
 dim=2
 mesh_path="../data/Liguria_tri/11_SASSELLO/mesh.obj"

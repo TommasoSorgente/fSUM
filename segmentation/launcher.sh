@@ -1,6 +1,8 @@
 #!/bin/bash
 
 segmentation="build/segmentation"
+#segmentation="../segmentation/build/Qt_6_8_0_for_macOS-Debug/segmentation"
+#segmentation="../segmentation/build/Desktop_Qt_6_8_0-Debug/segmentation"
 
 dim=2
 mesh_path="../data/Liguria_tri/11_SASSELLO/mesh.obj"
