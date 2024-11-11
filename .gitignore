@@ -39,4 +39,3 @@ out/
 # Files
 *.DS_Store
 *.user
-data/cube_tet/mesh.vtk

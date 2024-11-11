@@ -9,66 +9,6 @@
 
 using namespace cinolib;
 
-template<class M, class VD, class E, class PD> inline
-void load_cells_data(const std::string filepath, Polygonmesh<M,VD,E,PD> &m) {
-    std::ifstream file(filepath);
-    if (!file.is_open()) {
-        std::cerr << "Could not open the file " << filepath << std::endl;
-    }
-    std::string line;
-    std::getline(file, line); // skip the header line
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string cell_id_str, x, y, z, label1_str, label2_str, field_str;
-        std::getline(ss, cell_id_str, ',');
-        std::getline(ss, x, ',');
-        std::getline(ss, y, ',');
-        std::getline(ss, z, ',');
-        std::getline(ss, label1_str, ',');
-        std::getline(ss, label2_str, ',');
-        std::getline(ss, field_str, ',');
-
-        uint pid = std::stoi(cell_id_str);
-        int l    = std::stod(label1_str);
-        double f = std::stod(field_str);
-        m.poly_data(pid).fvalue = f;
-        m.poly_data(pid).label = l;
-    }
-    file.close();
-}
-
-void load_isovals(const std::string path, std::vector<double> &percentiles, std::vector<double> &isovalues, std::vector<int> &labels) {
-    std::ifstream fp(path);
-    assert(fp.is_open());
-    std::string line;
-    std::getline(fp, line);
-    std::string p_str, v_str, l_str;
-    while (std::getline(fp, line)) {
-        std::stringstream ss(line);
-        if (std::getline(ss, p_str, ',') && std::getline(ss, v_str, ',')) {
-            percentiles.push_back(std::stod(p_str));
-            isovalues.push_back(std::stod(v_str));
-            if (std::getline(ss, l_str, ',')) {
-                labels.push_back(std::stoi(l_str));
-            }
-        } else {
-            std::cerr << "Error reading line: " << line << std::endl;
-        }
-    }
-    fp.close();
-}
-
-void load_field(const std::string path, std::vector<double> &field) {
-    if (path == "") return;
-    std::ifstream fp(path.c_str());
-    assert(fp.is_open());
-    double f;
-    while (fp >> f) {
-        field.push_back(f);
-    }
-    fp.close();
-}
-
 void print_global_misclass(const uint n_polys, const std::vector<double> misclass_vec, const std::vector<uint> n_misclass_vec, const std::string path) {
     std::ofstream fp(path.c_str());
     assert(fp.is_open());
@@ -86,11 +26,13 @@ void print_global_misclass(const uint n_polys, const std::vector<double> misclas
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
+    if (argc < 5) {
         std::cout << "Welcome to Misclassification Viewer! Please input:\n"
                      "- the mesh \n"
                      "- the mesh cell data \n"
                      "- the isovalues file \n"
+                     "- the output path \n"
+                     "- the gui (1: yes, 0: no) \n"
                      "and optionally: \n"
                      "- the field_minus_sigma \n"
                      "- the field_plus_sigma \n";
@@ -100,12 +42,15 @@ int main(int argc, char *argv[])
     std::string mesh_file      = std::string(HOME_PATH) + argv[1];
     std::string cells_file     = std::string(HOME_PATH) + argv[2];
     std::string isovalues_file = std::string(HOME_PATH) + argv[3];
+    std::string output_path    = argv[4];
+    bool use_gui               = atoi(argv[5]);
     std::string sigma_m_file = "";
     std::string sigma_p_file = "";
-    if (argc == 6) {
-        sigma_m_file = std::string(HOME_PATH) + argv[4];
-        sigma_p_file = std::string(HOME_PATH) + argv[5];
+    if (argc == 8) {
+        sigma_m_file = std::string(HOME_PATH) + argv[6];
+        sigma_p_file = std::string(HOME_PATH) + argv[7];
     }
+    open_directory(output_path);
 
     DrawablePolygonmesh<M,VD,E,PD> m(mesh_file.c_str());
     load_cells_data(cells_file, m);
@@ -125,7 +70,7 @@ int main(int argc, char *argv[])
     std::vector<uint> n_misclass_vec(1,0);
     std::vector<uint> misclass_pids;
 
-    std::string local_file = std::string(HOME_PATH) + "local_misclassification.txt";
+    std::string local_file = output_path + "/local_misclassification.txt";
     std::ofstream fp(local_file.c_str());
     assert(fp.is_open());
     fp << "# pid, centroid x, centroid y, centroid z, field, isovalue_min, isovalue_max, field_m_sigma, field_p_sigma, misclassification" << std::endl;
@@ -161,8 +106,11 @@ int main(int argc, char *argv[])
     }
     fp.close();
 
-    std::string global_file = std::string(HOME_PATH) + "global_misclassification.txt";
+    std::string global_file = output_path + "/global_misclassification.txt";
     print_global_misclass(m.num_polys(), misclass_vec, n_misclass_vec, global_file);
+
+    if (!use_gui)
+        exit(0);
 
     GLcanvas gui(1000, 1000);
     gui.push(&m);

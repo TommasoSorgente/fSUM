@@ -1,2 +1,0 @@
-# n regions, misclassification, % misclassified, avg misclassification
-5, 1786.14, 0.000136154, 223.268

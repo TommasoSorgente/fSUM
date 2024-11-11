@@ -476,4 +476,70 @@ void save_mesh(AbstractMesh<M,V,E,P> &m,
     m.save(mesh_path.c_str());
 }
 
+/**********************************************************************/
+
+template<class M, class V, class E, class P> inline
+void load_cells_data(const std::string filepath, Polygonmesh<M,V,E,P> &m) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Could not open the file " << filepath << std::endl;
+    }
+    std::string line;
+    std::getline(file, line); // skip the header line
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string cell_id_str, x, y, z, label1_str, label2_str, field_str;
+        std::getline(ss, cell_id_str, ',');
+        std::getline(ss, x, ',');
+        std::getline(ss, y, ',');
+        std::getline(ss, z, ',');
+        std::getline(ss, label1_str, ',');
+        std::getline(ss, label2_str, ',');
+        std::getline(ss, field_str, ',');
+
+        uint pid = std::stoi(cell_id_str);
+        int l    = std::stod(label1_str);
+        double f = std::stod(field_str);
+        m.poly_data(pid).fvalue = f;
+        m.poly_data(pid).label = l;
+    }
+    file.close();
+}
+
+/**********************************************************************/
+
+void load_isovals(const std::string path, std::vector<double> &percentiles, std::vector<double> &isovalues, std::vector<int> &labels) {
+    std::ifstream fp(path);
+    assert(fp.is_open());
+    std::string line;
+    std::getline(fp, line);
+    std::string p_str, v_str, l_str;
+    while (std::getline(fp, line)) {
+        std::stringstream ss(line);
+        if (std::getline(ss, p_str, ',') && std::getline(ss, v_str, ',')) {
+            percentiles.push_back(std::stod(p_str));
+            isovalues.push_back(std::stod(v_str));
+            if (std::getline(ss, l_str, ',')) {
+                labels.push_back(std::stoi(l_str));
+            }
+        } else {
+            std::cerr << "Error reading line: " << line << std::endl;
+        }
+    }
+    fp.close();
+}
+
+/**********************************************************************/
+
+void load_field(const std::string path, std::vector<double> &field) {
+    if (path == "") return;
+    std::ifstream fp(path.c_str());
+    assert(fp.is_open());
+    double f;
+    while (fp >> f) {
+        field.push_back(f);
+    }
+    fp.close();
+}
+
 #endif // AUXILIARY_H
