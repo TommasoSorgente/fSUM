@@ -1,7 +1,6 @@
 #!/bin/bash
 
-#segmentation="build/Qt_6_8_0_for_macOS-Debug/segmentation"
-segmentation="build/Desktop_Qt_6_8_0-Debug/segmentation"
+segmentation="build/segmentation"
 
 dim=2
 mesh_path="../data/Liguria_tri/11_SASSELLO/mesh.obj"
@@ -29,7 +28,7 @@ VERBOSE=0
 
 ## LEGEND
 ##
-## exe: 	 path to the executable file
+## segmentation: path to the executable file
 ##
 ## INPUT
 ## dim:          dimension of the problem (2 | 3)
