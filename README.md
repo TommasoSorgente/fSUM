@@ -23,10 +23,20 @@ make
 
 ## Content of the repository
 
- - `data` folder containing the data used in the paper.
- - `external` folder containing links to external libraries.
- - `merge_regions` post-processing routine for merging regions into larger domains (used for the _Liguria_ example).
- - `src` folder containing the source code.
- - `CMakeLists.txt` CMake file to compile the code.
- - `main.cpp` sample program that reads input parameters, partitions the mesh and optionally displays it in a graphical interface.
- - `parameters.run` file containing all the parameters involved in the algorithm.
+ - `data` folder containing the data used in the paper;
+ - `external` folder containing links to external libraries;
+ - `src` folder containing the source code;
+ - `segmentation` main routine for segmenting a scalar field associated to a mesh;
+ - `merge_subdomains` post-processing routine for merging multiple segmentations into a single one;
+ - `misclassification` post-processing routine for computing the misclassification of a segmentation;
+ - `optimization` post-processing script for computing multiple segmentations with different _epsilon_ parameters, and choosing the optimal one.
+
+The three routines are independent, and each of them needs to be compiled through CMake by running:
+```
+cd ${ROUTINE_NAME}
+mkdir build
+cd build
+cmake ..
+make
+```
+After that, launch the `launcher.sh` Bash script to automatically reproduce the paper results.
