@@ -12,9 +12,9 @@ git clone --recursive git@github.com:TommasoSorgente/FESA.git
 
 ## Content of the repository
 
- - `data` folder containing the data used in the paper;
- - `external` folder containing links to external libraries;
- - `src` folder containing the source code;
+ - `data` meshes and scalar fields used in the paper;
+ - `external` links to external libraries;
+ - `src` the source code;
  - `segmentation` main routine for segmenting a scalar field associated to a mesh;
  - `merge_subdomains` post-processing routine for merging multiple segmentations into a single one;
  - `misclassification` post-processing routine for computing the misclassification of a segmentation;
