@@ -28,4 +28,4 @@ cd build
 cmake ..
 make
 ```
-After that, launch the `launcher.sh` Bash script to automatically reproduce the paper results.
+After that, launch the `launcher.sh` Bash script in each folder to automatically reproduce the paper results.
