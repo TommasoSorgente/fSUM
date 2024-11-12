@@ -479,7 +479,7 @@ void save_mesh(AbstractMesh<M,V,E,P> &m,
 /**********************************************************************/
 
 template<class M, class V, class E, class P> inline
-void load_cells_data(const std::string filepath, Polygonmesh<M,V,E,P> &m) {
+void load_cells_data(const std::string filepath, Polygonmesh<M,V,E,P> &m, std::vector<uint> &second_label) {
     std::ifstream file(filepath);
     if (!file.is_open()) {
         std::cerr << "Could not open the file " << filepath << std::endl;
@@ -498,10 +498,12 @@ void load_cells_data(const std::string filepath, Polygonmesh<M,V,E,P> &m) {
         std::getline(ss, field_str, ',');
 
         uint pid = std::stoi(cell_id_str);
-        int l    = std::stod(label1_str);
+        int l1   = std::stod(label1_str);
+        int l2   = std::stod(label2_str);
         double f = std::stod(field_str);
         m.poly_data(pid).fvalue = f;
-        m.poly_data(pid).label = l;
+        m.poly_data(pid).label = l1;
+        second_label.push_back(l2);
     }
     file.close();
 }

@@ -83,7 +83,8 @@ int main(int argc, char *argv[])
             }
             DrawablePolygonmesh<M,VD,E,PD> *m_local = new DrawablePolygonmesh<M,VD,E,PD>(domain.c_str());
             std::string cells_data = base_path + "region_" + std::to_string(label) + "_cells_data.csv";
-            load_cells_data(cells_data, *m_local); // load field value (fvalue) and label of each cell
+            std::vector<uint> second_label;
+            load_cells_data(cells_data, *m_local, second_label); // load field value (fvalue) and label of each cell
 
             // merge *m* with *m_local*, obtaining *res*
             DrawablePolygonmesh<M,VD,E,PD> *m_merge = new DrawablePolygonmesh<M,VD,E,PD>;

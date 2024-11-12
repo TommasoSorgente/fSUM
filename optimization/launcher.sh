@@ -1,7 +1,6 @@
 #!/bin/bash
 
-threshold=(0.001 0.5)
-#threshold=(0.001 0.5 1 1.5 2 2.5 3 3.5 4 4.5 5)
+threshold=(0.001 0.5 1 1.5 2 2.5 3 3.5 4 4.5 5)
 src="out/misclassification/global_misclassification.txt"
 dst="out/optimization.txt"
 

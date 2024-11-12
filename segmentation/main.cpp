@@ -76,10 +76,10 @@ int main(int argc, char *argv[]) {
         if (Par.get_CLEAN())   S.clean(m, Par);
         if (Par.get_SMOOTH())  S.smooth(m, Par);
         if (Par.get_ANALYZE()) S.output(m, Par);
-        else                   S.restore_original_labels(m);
+        S.restore_original_labels(m);
         if (!Par.get_GUI()) break;
 
-        m.show_out_wireframe_transparency(0.2f);
+        m.show_out_wireframe_transparency(0.1f);
         int n_labels = Par.get_N_REGIONS() - 1;
         for(uint pid=0; pid<m.num_polys(); ++pid) {
             float c = (float)m.poly_data(pid).label / n_labels;

@@ -9,18 +9,18 @@
 
 using namespace cinolib;
 
-void print_global_misclass(const uint n_polys, const std::vector<double> misclass_vec, const std::vector<uint> n_misclass_vec, const std::string path) {
+void print_global_misclass(const uint n_polys, const uint n_labels, const std::vector<double> misclass_vec, const std::vector<uint> n_misclass_vec, const std::string path) {
     std::ofstream fp(path.c_str());
     assert(fp.is_open());
-    fp << "# n regions, misclassification, % misclassified, avg misclassification" << std::endl;
+    fp << "# n subregions, misclassification, % misclassified, avg misclassification" << std::endl;
 
-    double regions = misclass_vec.size();
+    double subregions = n_labels;
     double misclass = std::accumulate(misclass_vec.begin(), misclass_vec.end(), 0.);
     double n = std::accumulate(n_misclass_vec.begin(), n_misclass_vec.end(), 0.);
     double avg_misclass = misclass / n;
     n /= n_polys;
 
-    fp << regions << ", " << misclass << ", " << n << ", " << avg_misclass << std::endl;
+    fp << subregions << ", " << misclass << ", " << n << ", " << avg_misclass << std::endl;
     fp.close();
 }
 
@@ -53,7 +53,9 @@ int main(int argc, char *argv[])
     open_directory(output_path);
 
     DrawablePolygonmesh<M,VD,E,PD> m(mesh_file.c_str());
-    load_cells_data(cells_file, m);
+    std::vector<uint> second_label;
+    load_cells_data(cells_file, m, second_label);
+    REMOVE_DUPLICATES_FROM_VEC(second_label);
 
     std::vector<double> percentiles, isovalues;
     std::vector<int> labels;
@@ -107,7 +109,7 @@ int main(int argc, char *argv[])
     fp.close();
 
     std::string global_file = output_path + "/global_misclassification.txt";
-    print_global_misclass(m.num_polys(), misclass_vec, n_misclass_vec, global_file);
+    print_global_misclass(m.num_polys(), second_label.size(), misclass_vec, n_misclass_vec, global_file);
 
     if (!use_gui)
         exit(0);
