@@ -6,8 +6,7 @@ segmentation="build/segmentation"
 
 dim=3
 mesh_path="../data/Genova_Harbor/mesh.vtk"
-#field_path="../data/Genova_Harbor/field_DO_mgl.csv"
-field_path="../data/Genova_Harbor/field_NH3.csv"
+field_path="../data/Genova_Harbor/field.csv"
 field_type=1
 FGLOBAL=0
 fieldG_path="."

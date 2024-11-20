@@ -40,6 +40,9 @@ int main(int argc, char *argv[])
 
     std::vector<double> global_field;
     load_field(field_file, global_field);
+    auto minmax = minmax_element(global_field.begin(), global_field.end());
+    double field_min = *minmax.first;
+    double field_max = *minmax.second;
 
     std::vector<double> percentiles, isovalues;
     std::vector<int> labels;
@@ -50,23 +53,6 @@ int main(int argc, char *argv[])
     Profiler prof;
     prof.push("Merge Subdomains");
     GLcanvas *gui = new GLcanvas(1000, 1000);
-
-    // SHOW THE SCALAR FIELD OVER THE WHOLE DOMAIN
-    // DrawablePolygonmesh<M,VD,E,PD> m((std::string(HOME_PATH) + "../data/Liguria_tri/mesh_global.obj").c_str());
-    // auto minmax = minmax_element(global_field.begin(), global_field.end());
-    // double field_min = *minmax.first;
-    // double field_max = *minmax.second;
-    // for(uint pid=0; pid<m.num_polys(); ++pid) {
-    //     double c = (global_field.at(pid) - field_min) / (field_max - field_min);
-    //     m.poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
-    // }
-    // m.show_poly_color();
-    // m.show_wireframe(false);
-    // gui->push(&m);
-    // SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>> menu(&m, gui);
-    // gui->push(&menu);
-    // gui->launch();
-    // return 0;
 
     for (uint label=0; label<labels.size(); ++label) {
         prof.push("Processed label " + std::to_string(label));
@@ -89,6 +75,7 @@ int main(int argc, char *argv[])
             // merge *m* with *m_local*, obtaining *res*
             DrawablePolygonmesh<M,VD,E,PD> *m_merge = new DrawablePolygonmesh<M,VD,E,PD>;
             merge_meshes_at_coincident_vertices(*m, *m_local, *m_merge);
+            assert(m_merge->num_polys() == m->num_polys() + m_local->num_polys());
             for (uint pid=0; pid<m->num_polys(); ++pid) {
                 m_merge->poly_data(pid) = m->poly_data(pid);
             }
@@ -127,14 +114,17 @@ int main(int argc, char *argv[])
         print_regions_shp(*m, stats, polys_in_region, output_path + "/shapefile", prof);
 
         m->mesh_data().filename = "label_" + std::to_string(label);
-        int n_labels = labels.size() - 1;
         for(uint pid=0; pid<m->num_polys(); ++pid) {
-            float c = (float)m->poly_data(pid).label / n_labels;
-            m->poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
+            assert(m->poly_data(pid).label == (int)label);
+            // float c = (m->poly_data(pid).fvalue - field_min) / (field_max - field_min);
+            // float c = (float)m->poly_data(pid).label / (labels.size() - 1);
+            // m->poly_data(pid).color = Color::red_white_blue_ramp_01(1. - c);
+            m->poly_data(pid).color = Color::parula_ramp(labels.size(), m->poly_data(pid).label);
         }
         // m->poly_color_wrt_label(false);
-        m->show_wireframe_transparency(0.2f);
+        m->show_wireframe_transparency(0.1f);
         m->show_marked_edge_color(Color::BLACK());
+        m->show_marked_edge_width(2.);
         m->updateGL();
         gui->push(m);
         SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>> *menu = new SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>>(m, gui);
