@@ -22,6 +22,8 @@ if (Test-Path -Path $BUILDDIR) {
 }
 Rename-Item -Path $SYSBUILDDIR -NewName $BUILDDIR
 
+Copy-Item -Path "$SCRIPTDIR\external\shapelib\build-Windows\dll\Debug\shp.dll" -Destination "$BUILDDIR\Release\shp.dll"
+
 # Navigate to the 'merge_subdomains' directory
 Set-Location -Path "$SCRIPTDIR\merge_subdomains"
 # Create the system build directory if it doesn't exist
