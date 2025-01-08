@@ -7,7 +7,7 @@ fSUM: _field Segmentation of Unstructured Meshes_ is an algorithm for partitioni
 Please use --recursive when cloning this repository:
 
 ```
-git clone --recursive git@github.com:TommasoSorgente/fSUM.git
+git clone --recursive https://github.com/TommasoSorgente/fSUM.git
 ```
 
 ## Content of the repository
