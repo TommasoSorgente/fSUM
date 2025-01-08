@@ -1,13 +1,13 @@
-# FESA
+# fSUM
 
-FESA: _Field-driven Enriched Segmentation Algorithm_ is an algorithm for partitioning a planar or volumetric domain, discretized through a mesh of any kind and with a scalar field defined on it, into a given number of regions in which the field is homogeneous.
+fSUM: _field Segmentation of Unstructured Meshes_ is an algorithm for partitioning a planar or volumetric domain, discretized through a mesh of any kind and with a scalar field defined on it, into a given number of regions in which the field is homogeneous.
 
 ## How to get it 
 
 Please use --recursive when cloning this repository:
 
 ```
-git clone --recursive git@github.com:TommasoSorgente/FESA.git
+git clone --recursive git@github.com:TommasoSorgente/fSUM.git
 ```
 
 ## Content of the repository
