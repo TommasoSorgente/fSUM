@@ -20,14 +20,17 @@ git clone --recursive git@github.com:TommasoSorgente/fSUM.git
  - `misclassification` post-processing routine for computing the misclassification of a segmentation;
  - `optimization` post-processing script for computing multiple segmentations with different _epsilon_ parameters, and choosing the optimal one.
 
-The three routines are independent, and each of them needs to be compiled through CMake by running:
-```
-cd ${ROUTINE_NAME}
-mkdir build
-cd build
-cmake ..
-make
-```
+## Build the source code
+
+To streamline and automate the build process, two scripts are provided:
+
+ - `build.sh`: Designed for Unix-like systems, including Linux and macOS.
+ - `build.ps1`: Tailored for Windows systems.
+
+Select the appropriate script for your operating system and execute it from its directory using the command line.
+
+## Reproduce paper results
+
 After that, launch the `launcher.sh` Bash script in each folder to automatically reproduce the paper results.
 The following scripts are available:
 
