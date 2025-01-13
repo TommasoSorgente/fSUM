@@ -1,0 +1,24 @@
+name: ubuntu-build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: dependencies
+        run: |
+          sudo apt update
+          sudo apt-get install -y libboost-all-dev
+          sudo apt-get install -y libxrandr-dev libxinerama-dev libxi-dev libxcursor-dev
+      - name: build
+        env:
+          CC: gcc-9
+          CXX: g++-9
+        run: |
+          ./build.sh
