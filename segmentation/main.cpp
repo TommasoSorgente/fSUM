@@ -64,8 +64,6 @@ int main(int argc, char *argv[]) {
 
         SurfaceMeshControls<DrawablePolygonmesh<M,VD,E,PD>> menu(&m, &gui);
         gui.push(&menu);
-        // gui.camera.rotate_x(-90);
-        // gui.update_GL_matrices();
         gui.launch();
         break;
     }

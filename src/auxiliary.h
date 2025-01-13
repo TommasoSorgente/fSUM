@@ -395,7 +395,7 @@ void print_regions(Polyhedralmesh<M,E,V,F,P> &m, const std::unordered_map<int, i
         export_cluster(m, l.first, sub_m, m2subm_vmap, subm2m_vmap);
         if (sub_m.num_polys() == 0)
             continue;
-        std::string path = base_path + "/region_" + std::to_string(l.first) + ".vtk";
+        std::string path = base_path + "/region_" + std::to_string(l.first) + ".mesh";
         sub_m.save(path.c_str());
 
         // recover verts and cells data from *m* and print them in csv files
@@ -470,7 +470,7 @@ void save_mesh(AbstractMesh<M,V,E,P> &m,
                const std::string output_path, const std::string MESH_FORMAT)
 {
     if (MESH_FORMAT == "-") {
-        MESH_FORMAT = m.mesh_is_surface() ? "obj" : "vtk";
+        MESH_FORMAT = m.mesh_is_surface() ? "obj" : "mesh";
     }
     std::string mesh_path = output_path + "/mesh_out." + MESH_FORMAT;
     m.save(mesh_path.c_str());

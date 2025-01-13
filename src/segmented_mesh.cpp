@@ -173,7 +173,7 @@ void SegmentedMesh::output(Polyhedralmesh<M,E,V,F,P> &m, Parameters &Par)
     // save mesh
     std::string domain_dir = output_path + "/domain";
     open_directory(domain_dir);
-    m.save((domain_dir + "/domain.vtk").c_str());
+    m.save((domain_dir + "/domain.mesh").c_str());
 
     // print verts and cells data (label and field) in a csv file
     print_verts_csv(m, domain_dir + "/domain_verts_data.csv", prof);

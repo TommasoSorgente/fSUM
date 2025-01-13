@@ -6,7 +6,7 @@ $segmentation = "$SCRIPTDIR/build/Release/segmentation.exe"
 # $segmentation = "../segmentation/build/Desktop_Qt_6_8_0-Debug/segmentation"
 
 $dim = 3
-$mesh_path = "$SCRIPTDIR/../data/Genova_Harbor/mesh.vtk"
+$mesh_path = "$SCRIPTDIR/../data/Genova_Harbor/mesh.mesh"
 $field_path = "$SCRIPTDIR/../data/Genova_Harbor/field.csv"
 $field_type = 1
 $FGLOBAL = 0
