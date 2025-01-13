@@ -1,0 +1,21 @@
+name: macos-build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: dependencies
+        run: |
+          brew update
+          brew install glfw3 
+          brew install glew
+      - name: build
+        run: |
+          ./build.sh
