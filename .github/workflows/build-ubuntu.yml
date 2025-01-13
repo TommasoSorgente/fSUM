@@ -8,7 +8,7 @@ on:
     - misclassification/**
     - segmentation/**
     - build.sh
-    - .github/workflows/ubuntu.yml
+    - .github/workflows/build-ubuntu.yml
 
 jobs:
   build:
