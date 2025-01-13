@@ -2,6 +2,13 @@ name: ubuntu-build
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+    - merge_subdomains/**
+    - misclassification/**
+    - segmentation/**
+    - build.sh
+    - .github/workflows/ubuntu.yml
 
 jobs:
   build:
