@@ -2,6 +2,10 @@
 
 fSUM: _field Segmentation of Unstructured Meshes_ is an algorithm for partitioning a planar or volumetric domain, discretized through a mesh of any kind and with a scalar field defined on it, into a given number of regions in which the field is homogeneous.
 
+[![Ubuntu-Latest build status](https://github.com/TommasoSorgente/fSUM/actions/workflows/build-ubuntu.yml/badge.svg)](https://github.com/TommasoSorgente/fSUM/actions/workflows/build-ubuntu.yml)
+[![MacOS-Latest build status](https://github.com/TommasoSorgente/fSUM/actions/workflows/build-macos.yml/badge.svg)](https://github.com/TommasoSorgente/fSUM/actions/workflows/build-macos.yml)
+[![Windows-Latest build status](https://github.com/TommasoSorgente/fSUM/actions/workflows/build-windows.yml/badge.svg)](https://github.com/TommasoSorgente/fSUM/actions/workflows/build-windows.yml)
+
 ## How to get it 
 
 Please use --recursive when cloning this repository:
@@ -25,7 +29,7 @@ git clone --recursive https://github.com/TommasoSorgente/fSUM.git
 To streamline and automate the build process, two scripts are provided:
 
  - `build.sh`: Designed for Unix-like systems, including Linux and macOS.
- - `build.ps1`: Tailored for Windows systems.
+ - `build.ps1`: Tailored for Windows systems. 
 
 Select the appropriate script for your operating system and execute it from its directory using the command line.
 
