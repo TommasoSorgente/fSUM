@@ -2,6 +2,13 @@ name: windows-build
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+    - merge_subdomains/**
+    - misclassification/**
+    - segmentation/**
+    - build.ps1
+    - .github/workflows/build-windows.yml
 
 jobs:
   build:
