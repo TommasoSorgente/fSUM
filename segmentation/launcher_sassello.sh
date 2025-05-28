@@ -56,7 +56,7 @@ VERBOSE=0
 ##
 ## OUTPUT
 ## out_path:     path do a directory where to save all outputs
-## out_level:	 output level: (0) domain, (1) regions, (2) subregions
+## out_level:	 output level: (1) domain, (2) regions, (3) subregions
 ## GUI:          launch graphical interface (0 | 1)
 ## VERBOSE:      print debug information (0 | 1)
 
