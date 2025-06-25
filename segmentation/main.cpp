@@ -4,6 +4,7 @@
 #include <cinolib/gl/surface_mesh_controls.h>
 #include <cinolib/gl/volume_mesh_controls.h>
 #include <cinolib/meshes/mesh_attributes.h>
+#include <cinolib/profiler.h>
 #include <tclap/CmdLine.h>
 
 #include "../src/segmented_mesh.h"
@@ -24,6 +25,8 @@ int main(int argc, char *argv[]) {
     if (Par.get_VERBOSE()) Par.print_pars();
 
     SegmentedMesh S;
+    Profiler prof;
+    prof.push("Segmentation");
 
     switch (Par.get_DIM()) {
     case 2: {
@@ -34,6 +37,7 @@ int main(int argc, char *argv[]) {
         if (Par.get_SMOOTH())  S.smooth(m, Par);
         if (Par.get_ANALYZE()) S.output(m, Par);
         S.restore_original_labels(m);
+        prof.pop();
         if (!Par.get_GUI()) break;
 
         m.show_wireframe_transparency(0.1f);
@@ -75,6 +79,7 @@ int main(int argc, char *argv[]) {
         if (Par.get_SMOOTH())  S.smooth(m, Par);
         if (Par.get_ANALYZE()) S.output(m, Par);
         S.restore_original_labels(m);
+        prof.pop();
         if (!Par.get_GUI()) break;
 
         m.show_out_wireframe_transparency(0.1f);
