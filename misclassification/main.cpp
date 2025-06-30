@@ -12,16 +12,18 @@ using namespace cinolib;
 void print_global_misclass(const uint n_polys, const uint n_labels, const std::vector<double> misclass_vec, const std::vector<uint> n_misclass_vec, const std::string path) {
     std::ofstream fp(path.c_str());
     assert(fp.is_open());
-    fp << "# n subregions, misclassification, % misclassified, avg misclassification" << std::endl;
+    fp << "# n subregions, misclassification, n misclassified, % misclassified, avg misclassification" << std::endl;
 
     double subregions = n_labels;
     double misclass = std::accumulate(misclass_vec.begin(), misclass_vec.end(), 0.);
     double n = std::accumulate(n_misclass_vec.begin(), n_misclass_vec.end(), 0.);
     double avg_misclass = misclass / n;
-    n /= n_polys;
 
-    fp << subregions << ", " << misclass << ", " << n << ", " << avg_misclass << std::endl;
+    fp << subregions << ", " << misclass << ", " << n << ", " << n/n_polys << ", " << avg_misclass << std::endl;
     fp.close();
+
+    std::cout << "n subregions, misclassification, n misclassified, % misclassified, avg misclassification" << std::endl;
+    std::cout << subregions << ", \t" << misclass << ", \t" << n << ", \t" << n/n_polys << ", \t" << avg_misclass << std::endl;
 }
 
 int main(int argc, char *argv[])
