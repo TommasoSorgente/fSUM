@@ -7,7 +7,7 @@
 template<class M, class V,  class E, class P> inline
 void SegmentedMesh::init(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 {
-    prof.push("FESA::init");
+    prof.push("fSUM::init");
     verbose = Par.get_VERBOSE();
 
     // load mesh and scalar fields
@@ -66,7 +66,7 @@ void SegmentedMesh::init(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 template<class M, class V,  class E, class P> inline
 void SegmentedMesh::segment(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 {
-    prof.push("FESA::segment");
+    prof.push("fSUM::segment");
     compute_isovalues(Par.get_N_REGIONS(), Par.get_ISOVAL_TYPE(), Par.get_ISOVAL_VALS());
 
     compute_isoregions(m, Par.get_DENOISE());
@@ -81,7 +81,7 @@ void SegmentedMesh::segment(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 template<class M, class V,  class E, class P> inline
 void SegmentedMesh::clean(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 {
-    prof.push("FESA::clean");
+    prof.push("fSUM::clean");
     int i = 0, n_labels_tmp = 0;
     int n_labels_init = polys_in_subregion.size();
 
@@ -98,8 +98,10 @@ void SegmentedMesh::clean(AbstractMesh<M,V,E,P> &m, Parameters &Par)
         ++i;
     }
 
+    std::cout << "cleaning MAX_ITER: " << i << std::endl;
+
     if (n_labels_tmp == n_labels_init) {
-        cout << "FESA Warning: did not remove any label. Filter_thresh is too high?";
+        cout << "fSUM Warning: did not remove any label. Filter_thresh is too high?";
     }
     prof.pop(true, "\tfound " + std::to_string(polys_in_subregion.size()) + " components");
 }
@@ -109,12 +111,13 @@ void SegmentedMesh::clean(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 template<class M, class V,  class E, class P> inline
 void SegmentedMesh::smooth(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 {
-    prof.push("FESA::smooth boundaries");
+    prof.push("fSUM::smooth boundaries");
     int j = 0, count = 1;
     while (count > 0 && j < Par.get_N_ITER()) {
         count = smooth_boundaries(m);
         ++j;
     }
+    std::cout << "smoothing MAX_ITER: " << j << std::endl;
     prof.pop();
 }
 
@@ -123,7 +126,7 @@ void SegmentedMesh::smooth(AbstractMesh<M,V,E,P> &m, Parameters &Par)
 template<class M, class V,  class E, class P> inline
 void SegmentedMesh::output(Polygonmesh<M,V,E,P> &m, Parameters &Par)
 {
-    prof.push("FESA::output");
+    prof.push("fSUM::output");
     update_regions_map(m, polys_in_subregion);
 
     // print field and isovalues info
@@ -163,7 +166,7 @@ void SegmentedMesh::output(Polygonmesh<M,V,E,P> &m, Parameters &Par)
 template<class M, class E, class V, class F, class P> inline
 void SegmentedMesh::output(Polyhedralmesh<M,E,V,F,P> &m, Parameters &Par)
 {
-    prof.push("FESA::output");
+    prof.push("fSUM::output");
     update_regions_map(m, polys_in_subregion);
 
     // print field and isovalues info
