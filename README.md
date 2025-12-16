@@ -46,4 +46,17 @@ The following scripts are available:
  - `segmentation/launcher_harbor.sh` marine science application from Section 6.2;
  - `segmentation/launcher_groundwater.sh` groundwater modeling application from Section 6.3;
 
+## Citation
 
+If you use fSUM in your research, please cite our paper:
+
+```bibtex
+@article{sorgente2025segmentation,
+  title={Segmentation of stochastic scalar fields in unstructured meshes},
+  author={Sorgente, Tommaso and Miola, Marianna and Pittaluga, Simone and Cabiddu, Daniela and Mortara, Michela and Zuccolini, Marino Vetuschi},
+  journal={Computers \& Geosciences},
+  pages={106041},
+  year={2025},
+  publisher={Elsevier}
+}
+```
