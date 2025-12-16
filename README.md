@@ -60,3 +60,8 @@ If you use fSUM in your research, please cite our paper:
   publisher={Elsevier}
 }
 ```
+
+## Acknowledgments
+
+This work is supported by the European Union - NextGenerationEU and by the Ministry of University and Research (MUR), National Recovery and Resilience Plan (NRRP), Mission 4, Component 2, Investment 1.5, project ``RAISE - Robotics and AI for Socio-economic Empowerment'' (ECS00000035).
+
